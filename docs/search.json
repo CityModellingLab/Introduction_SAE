@@ -4,7 +4,7 @@
     "href": "about.html",
     "title": "About",
     "section": "",
-    "text": "About this site"
+    "text": "This tutorial provides you with a comprehensive introduction to Small Area Estimation (SAE) methods using R. It is designed to help geographers, urban analysts, and geospatial data scientists understand and apply the principles of SAE in their work. The tutoral focuses on regression-based SAE methods, and covers the following key topics:\n\nIntroduction to SAE: Understanding the need for SAE in geography and urban analysis.\nDirect Estimators: Exploring the limitations of direct estimators in small area contexts.\nRegression-Based Methods: Introduction to the area-level and unit-level models.\nPractical Applications: Implementing SAE methods in R using real-world datasets.\n\nThe tutorial is designed to be accessible to those with a basic understanding of statistical modelling. A familiarity with R is beneficial, but not strictly necessary, as the tutorial includes already prepared code snippets for practical implementation.\nAll the materials are available through the Workshop’s GitHub repository, available here:"
   },
   {
     "objectID": "index.html",
