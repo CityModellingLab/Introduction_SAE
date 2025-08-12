@@ -3,20 +3,26 @@ project:
   output-dir: docs
 
 website:
-  title: "introduction_SAE"
-  navbar:
-    left:
+  title: "My Site"
+  sidebar:
+    style: "docked"     # left, always visible
+    search: true
+    collapse-level: 1   # collapse deeper levels by default
+    contents:
       - href: index.qmd
         text: Home
+      - section: "First Section"
+        contents:
+          - first/index.qmd     # section landing page
+          - first/sub1.qmd      # subsection link 1
+          - first/sub2.qmd      # subsection link 2
       - about.qmd
 
 format:
   html:
-    theme:
-      - cosmo
-      - brand
-    css: styles.css
+    theme: cosmo
     toc: true
+    number-sections: true
 
 
 

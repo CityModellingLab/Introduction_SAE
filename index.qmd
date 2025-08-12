@@ -1,5 +1,5 @@
 ---
-title: "introduction_SAE"
+title: "Introduction to Small Area Estimation"
 ---
 
 This is a Quarto website.
