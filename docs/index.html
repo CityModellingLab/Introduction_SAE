@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Introduction to Small Area Estimation – My Site</title>
+<title>Introduction to Small Area Estimation – A practical guide to SAE</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,7 +20,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -68,6 +88,7 @@ ul.task-list li input[type="checkbox"] {
 }</script>
 
 
+<link rel="stylesheet" href="styles.css">
 </head>
 
 <body class="nav-sidebar docked">
@@ -79,7 +100,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Home</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Introduction</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -94,7 +115,7 @@ ul.task-list li input[type="checkbox"] {
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">My Site</a> 
+      <a href="./">A practical guide to SAE</a> 
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -106,43 +127,60 @@ ul.task-list li input[type="checkbox"] {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./about.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">About this guide</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./index.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Home</span></a>
+ <span class="menu-text">Introduction</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
- <span class="menu-text">First Section</span></a>
+ <span class="menu-text">Introduction</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
- <span class="menu-text">first/index.qmd</span>
-  </li>
-          <li class="sidebar-item">
- <span class="menu-text">first/sub1.qmd</span>
-  </li>
-          <li class="sidebar-item">
- <span class="menu-text">first/sub2.qmd</span>
-  </li>
-      </ul>
-  </li>
-        <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./about.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">About</span></a>
+  <a href="./introduction/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction to Small Area Estimation</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./introduction/sub1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Subsection One</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./introduction/sub2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Subsection Two</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-is-small-area-estimation" id="toc-what-is-small-area-estimation" class="nav-link active" data-scroll-target="#what-is-small-area-estimation"><span class="header-section-number">1</span> What is Small Area Estimation?</a></li>
+  <li><a href="#sae-applications" id="toc-sae-applications" class="nav-link" data-scroll-target="#sae-applications"><span class="header-section-number">2</span> SAE applications</a></li>
+  <li><a href="#why-do-we-need-it" id="toc-why-do-we-need-it" class="nav-link" data-scroll-target="#why-do-we-need-it"><span class="header-section-number">3</span> Why do we need it?</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -166,12 +204,33 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>This is a Quarto website.</p>
-<p>To learn more about Quarto websites visit <a href="https://quarto.org/docs/websites" class="uri">https://quarto.org/docs/websites</a>.</p>
+<section id="what-is-small-area-estimation" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> What is Small Area Estimation?</h1>
+<p><strong>Small area estimation (SAE)</strong> is a statistical methodology that aims to produce reliable estimates at high spatial resolutions. Surveys are designed to produce reliable estimates for larger geographic areas, such as countries or regions. However, researchers, analysts, and policymakers often face challenges that require estimates for smaller geographic areas, such as districts or neighbourhoods. Producing estimates for these smaller areas using survey data designed for larger areas can be problematic, as the sample sizes are often too small or even non-existent for those smaller areas. Small area estimation methods address this issue by implementing methodologies that allow for the production of reliable estimates in these cases.</p>
+</section>
+<section id="sae-applications" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> SAE applications</h1>
+<p>SAE methods have been widely applied in mulitple fields. These methods were originally developed to address the need for reliable data to tackle issues such as poverty, health, and education at local levels. They are particularly useful in contexts where access to official statistics is limited or the available data is not updated frequently enough to inform timely policy decisions. These methods are commonly used by official statistical offices and institutions, such as the Office for National Statistics (ONS) in the UK and the World Bank <span class="citation" data-cites="ONS_SAIE_MSOA_EW corral2022guidelines">(<a href="#ref-corral2022guidelines" role="doc-biblioref">Corral et al., 2022</a>; <a href="#ref-ONS_SAIE_MSOA_EW" role="doc-biblioref">Office for National Statistics, 2023</a>)</span>.</p>
+<p>Small area estimation methods aim at producing reliable estimates for geographic areas or subpopulation groups —from now on, domains— for which survey samples are scarce or even non-existent. Easy fixes for this problems could involve increasing the sample sizes, or changing the sampling design so that domains that were initially unplanned, become planned. This, however, is in most cases not possible because of monetary constraints or because the survey already exists. Therefore, indirect methods are required. These more sophisticated methods take advantage of the existing relationships in the data, relying on statistical models to describe these relationships and filling in the gaps where data is scarce. These auxiliary variables “borrow strength” from cross-sectional data or time and/or spatial correlation to produce more reliable estimates.</p>
+<p>Small area estimation (SAE) has been widely applied across sectors to produce detailed, policy-relevant statistics that would otherwise be unavailable or unreliable. A prominent example is in the field of poverty alleviation, where SAE methods have had tangible impacts. Policymakers aiming to reduce poverty often face the dual challenge of limited budgets and a need for granular, local-level information to effectively target interventions. The demand for cost-effective, disaggregated data has driven the adoption of indirect estimation techniques, particularly for producing poverty indicators at the subnational level. In response, organisations such as the World Bank have employed SAE methods to generate high-resolution poverty maps that improve our understanding of the spatial distribution of poverty and help guide resource allocation <span class="citation" data-cites="corral2022guidelines">(<a href="#ref-corral2022guidelines" role="doc-biblioref">Corral et al., 2022</a>)</span></p>
+<p>Beyond poverty estimation, SAE has been key in filling data gaps in other domains. In the UK, for example, the national census has never included questions on income, despite income being a crucial variable for policymakers, researchers, and other data users. To address this, the Office for National Statistics (ONS) uses SAE to estimate income levels in areas where survey data alone are insufficient <span class="citation" data-cites="OfficeforNationalStatistics2016">(<a href="#ref-OfficeforNationalStatistics2016" role="doc-biblioref"><strong>OfficeforNationalStatistics2016?</strong></a>)</span>. Through a method known as synthetic estimation, the ONS combines household survey responses with auxiliary data—such as administrative records and census-derived indicators—that are available for all geographic units in the target population. By modelling the relationship between individual income and area-level covariates (e.g., the proportion of residents claiming Income Support), the ONS fits a regression model using sampled areas and applies it nationally under the assumption that the relationships hold across all areas. This enables the production of robust and consistent income estimates for small geographic units, such as Middle-layer Super Output Areas (MSOAs), even in the absence of direct survey data.</p>
+</section>
+<section id="why-do-we-need-it" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Why do we need it?</h1>
+<p>Brief overview text. You can add images, code, etc.</p>
 
 
 
-</main> <!-- /main -->
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" data-line-spacing="2" role="list">
+<div id="ref-corral2022guidelines" class="csl-entry" role="listitem">
+Corral, P., Molina, I., Cojocaru, A., &amp; Segovia, S. (2022). <em>Guidelines to small area estimation for poverty mapping. 2022</em>.
+</div>
+<div id="ref-ONS_SAIE_MSOA_EW" class="csl-entry" role="listitem">
+Office for National Statistics. (2023). <em>Small area income estimates for middle layer super output areas, england and wales</em> [Dataset]. Office for National Statistics. <a href="https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/earningsandworkinghours/datasets/smallareaincomeestimatesformiddlelayersuperoutputareasenglandandwales">https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/earningsandworkinghours/datasets/smallareaincomeestimatesformiddlelayersuperoutputareasenglandandwales</a>
+</div>
+</div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

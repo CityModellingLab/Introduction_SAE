@@ -1,7 +1,24 @@
 ---
-title: "Introduction to Small Area Estimation"
+title: Introduction to Small Area Estimation
 ---
 
-This is a Quarto website.
+# What is Small Area Estimation?
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+**Small area estimation (SAE)** is a statistical methodology that aims to produce reliable estimates at high spatial resolutions. Surveys are designed to produce reliable estimates for larger geographic areas, such as countries or regions. However, researchers, analysts, and policymakers often face challenges that require estimates for smaller geographic areas, such as districts or neighbourhoods. Producing estimates for these smaller areas using survey data designed for larger areas can be problematic, as the sample sizes are often too small or even non-existent for those smaller areas. Small area estimation methods address this issue by implementing methodologies that allow for the production of reliable estimates in these cases.
+
+# SAE applications
+
+SAE methods have been widely applied in mulitple fields. These methods were originally developed to address the need for reliable data to tackle issues such as poverty, health, and education at local levels. They are particularly useful in contexts where access to official statistics is limited or the available data is not updated frequently enough to inform timely policy decisions. These methods are commonly used by official statistical offices and institutions, such as the Office for National Statistics (ONS) in the UK and the World Bank [@ONS_SAIE_MSOA_EW;@corral2022guidelines].
+
+
+
+Small area estimation methods aim at producing reliable estimates for geographic areas or subpopulation groups —from now on, domains— for which survey samples are scarce or even non-existent. Easy fixes for this problems could involve increasing the sample sizes, or changing the sampling design so that domains that were initially unplanned, become planned. This, however, is in most cases not possible because of monetary constraints or because the survey already exists. Therefore, indirect methods are required. These more sophisticated methods take advantage of the existing relationships in the data, relying on statistical models to describe these relationships and filling in the gaps where data is scarce. These auxiliary variables "borrow strength" from cross-sectional data or time and/or spatial correlation to produce more reliable estimates.
+
+Small area estimation (SAE) has been widely applied across sectors to produce detailed, policy-relevant statistics that would otherwise be unavailable or unreliable. A prominent example is in the field of poverty alleviation, where SAE methods have had tangible impacts. Policymakers aiming to reduce poverty often face the dual challenge of limited budgets and a need for granular, local-level information to effectively target interventions. The demand for cost-effective, disaggregated data has driven the adoption of indirect estimation techniques, particularly for producing poverty indicators at the subnational level. In response, organisations such as the World Bank have employed SAE methods to generate high-resolution poverty maps that improve our understanding of the spatial distribution of poverty and help guide resource allocation [@corral2022guidelines]
+
+Beyond poverty estimation, SAE has been key in filling data gaps in other domains. In the UK, for example, the national census has never included questions on income, despite income being a crucial variable for policymakers, researchers, and other data users. To address this, the Office for National Statistics (ONS) uses SAE to estimate income levels in areas where survey data alone are insufficient [@OfficeforNationalStatistics2016]. Through a method known as synthetic estimation, the ONS combines household survey responses with auxiliary data—such as administrative records and census-derived indicators—that are available for all geographic units in the target population. By modelling the relationship between individual income and area-level covariates (e.g., the proportion of residents claiming Income Support), the ONS fits a regression model using sampled areas and applies it nationally under the assumption that the relationships hold across all areas. This enables the production of robust and consistent income estimates for small geographic units, such as Middle-layer Super Output Areas (MSOAs), even in the absence of direct survey data.
+
+
+# Why do we need it?
+
+Brief overview text. You can add images, code, etc.

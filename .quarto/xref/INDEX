@@ -13,5 +13,8 @@
   },
   "introduction/index.qmd": {
     "index.html": "8671e403"
+  },
+  "workshop/practical/practical.qmd": {
+    "practical.html": "1d7bad73"
   }
 }
