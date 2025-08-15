@@ -336,7 +336,7 @@ $$
 \hat{\theta}_i^{\mathrm{DIR}} = \theta_i + \epsilon_i
 $$
 
--   $\hat{\theta}_i^{\mathrm{DIR}}$: Our direct estimate of average income for district $i$ (e.g., €56,667 for Murau, calculated from the small sample).
+-   $\hat{\theta}_i^{\mathrm{DIR}}$: Our direct estimate of average income for district $i$..
 -   $\theta_i$: The true, but unknown, average income for district $i$.
 -   $\epsilon_i$: The sampling error, which is large for districts with small samples and small for districts with large samples (remember the plot with the confidence intervals). The variance of this error, $V_i$, is known from our survey design.
 
@@ -346,9 +346,9 @@ This is where we "borrow strength" from other areas using auxiliary data. The li
 
 $$\theta_i = x_i' \beta + u_i$$
 
--   $\theta_i$: The true average income for district $i$ (e.g., Murau). We're trying to model this value.
+-   $\theta_i$: The true average income for district $i$. This is the value we want to model.
 
--   $x_i' \beta$: This is the **model-based part**. It's a linear regression that predicts the average income based on known, reliable data for each district. These are our "auxiliary variables" ($x_i$).
+-   $x_i' \beta$: This is the **model-based part**. It's a linear regression that predicts the average income based on known, reliable data for each district.
 
     -   $x_i$: A vector of auxiliary variables for district $i$. For our Austrian example, these could be:
         -   The average education level of the district.
@@ -404,3 +404,155 @@ The intercept-only model is the most basic way to improve a direct estimator. It
 -   "Therefore, our best guess for any district's true income is the **overall average income for all of Austria**."
 -   "However, we know that each district will have its own unique, random deviation from this average."
 -   "We will combine this overall average with our direct estimate from the survey, giving more weight to the overall average when the direct estimate is unreliable (i.e., has a high variance)."
+
+
+```{r, fig.height=12}
+
+# 1) Prepare the sample data (rename columns for consistency)
+smpAgg <- sae_direct %>%
+  mutate(Var_Direct = SD^2,       # variance of the direct estimate
+         Mean = Direct) %>%       # rename Direct to Mean
+  select(Domain, Mean, Var_Direct)
+
+# 2) Prepare the population covariates (all 94 domains)
+popAgg <- eusilcA_popAgg %>%
+  select(Domain, cash, self_empl)
+
+# 3) Combine sample and population data
+combined_data <- combine_data(
+  pop_data   = popAgg,    pop_domains = "Domain",
+  smp_data   = smpAgg,    smp_domains = "Domain"
+)
+
+# 4) Fit the Fay–Herriot model
+fh_fit <- emdi::fh(
+  fixed         = Mean ~ 1,
+  vardir        = "Var_Direct",
+  combined_data = combined_data,
+  domains       = "Domain",
+  method        = "ml",              
+  MSE           = TRUE
+)
+
+# 5) Extract estimates (includes OOS areas)
+results <- as.data.frame(emdi::estimators(fh_fit, MSE = TRUE))
+
+# Plot results and 95% confidence intervals
+
+results_ci <- results %>%
+  mutate(
+    lower = FH - 1.96 * sqrt(FH_MSE),
+    upper = FH + 1.96 * sqrt(FH_MSE)
+  )
+
+# 2) Plot
+ggplot(results_ci, aes(x = reorder(Domain, FH), y = FH)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), colour = "gray", width = 0.3) +
+  geom_point(color = "#264653") +
+  coord_flip() +
+  labs(
+    x = "District",
+    y = "Equivalised income (Fay–Herriot estimate)",
+    title = "Model-Based Estimates of Equivalised Income (95% CI)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(lineheight = 1.5))
+```
+
+### The Fay-Herriot model with auxiliary variables
+
+```{r, fig.height=12}
+# 1) Prepare the sample data (rename columns for consistency)
+smpAgg <- sae_direct %>%
+  mutate(Var_Direct = SD^2,       # variance of the direct estimate
+         Mean = Direct) %>%       # rename Direct to Mean
+  select(Domain, Mean, Var_Direct)
+
+# 2) Prepare the population covariates (all 94 domains)
+popAgg <- eusilcA_popAgg %>%
+  select(Domain, cash, self_empl)
+
+# 3) Combine sample and population data
+combined_data <- combine_data(
+  pop_data   = popAgg,    pop_domains = "Domain",
+  smp_data   = smpAgg,    smp_domains = "Domain"
+)
+
+# 4) Fit the Fay–Herriot model
+fh_fit <- emdi::fh(
+  fixed         = Mean ~ cash + self_empl,
+  vardir        = "Var_Direct",
+  combined_data = combined_data,
+  domains       = "Domain",
+  method        = "ml",              
+  MSE           = TRUE
+)
+
+# 5) Extract estimates (includes OOS areas)
+results <- as.data.frame(emdi::estimators(fh_fit, MSE = TRUE))
+
+# Plot results and 95% confidence intervals
+
+results_ci <- results %>%
+  mutate(
+    lower = FH - 1.96 * sqrt(FH_MSE),
+    upper = FH + 1.96 * sqrt(FH_MSE)
+  )
+
+# 2) Plot
+ggplot(results_ci, aes(x = reorder(Domain, FH), y = FH)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), colour = "gray", width = 0.3) +
+  geom_point(color = "#264653") +
+  coord_flip() +
+  labs(
+    x = "District",
+    y = "Equivalised income (Fay–Herriot estimate)",
+    title = "Model-Based Estimates of Equivalised Income (95% CI)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(lineheight = 1.5))
+
+```
+
+## Unit-level models -- The Battese-Harter-Fuller model
+
+```{r}
+ebp_model <- ebp(
+  fixed        = eqIncome ~  cash + self_empl, # model formula
+  pop_data     = eusilcA_pop,    # population frame
+  pop_domains  = "district",       # domain variable in population data
+  smp_data     = eusilcA_smp,    # sample microdata
+  smp_domains  = "district",       # domain variable in sample data
+  L            = 100,            # number of Monte Carlo simulations
+  MSE          = TRUE,           # request MSEs
+  B            = 50,             # bootstrap reps for MSE
+  transformation = "box.cox",    # transformation for skewed income data
+  cpus         = 2               # parallel cores (optional)
+)
+```
+
+```{r, fig.height=12}
+summary(ebp_model)                  # model + data info
+results <- as.data.frame(emdi::estimators(ebp_model, MSE=TRUE)) # domain estimates + MSE
+
+ebp_ci <- results %>%
+  mutate(
+    lower = Mean - 1.96 * sqrt(Mean_MSE),
+    upper = Mean + 1.96 * sqrt(Mean_MSE)
+  )
+
+# 3) Plot (taller figure so 94 areas aren’t cramped)
+p <- ggplot(ebp_ci, aes(x = reorder(Domain, Mean), y = Mean)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), colour = "gray50", width = 0.3) +
+  geom_point(color = "#264653", size = 2) +
+  coord_flip() +
+  labs(
+    x = "District",
+    y = "Equivalised income (EBP estimate)",
+    title = "Unit-level EBP Estimates with 95% Confidence Intervals"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(axis.text.y = element_text(lineheight = 1.5))
+
+p
+```
