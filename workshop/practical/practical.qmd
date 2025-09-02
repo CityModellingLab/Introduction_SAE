@@ -182,7 +182,7 @@ weights_per_district <- eusilcA_smp |>
   select(district, weight) |> 
   distinct()
 
-print(paste0("We get a total of ", nrow(weights_per_district), "unique weights."))
+print(paste0("We get a total of ", nrow(weights_per_district), " unique weights."))
 
 # Calculate the weights manually
 ## Count population per district
@@ -230,7 +230,7 @@ The plot shows that the manually calculated weights match the survey weights. Th
 
 ## Manual calculation of the direct estimator
 
-Now that we understand Let us now calculate the direct estimator manually. We will follow the Horvitz-Thompson estimator formula, which we introduced above. The steps are as follows:
+Now that we understand how the weights were calcualated, let us now calculate the direct estimator manually. We will follow the Horvitz-Thompson estimator formula, which we introduced above. The steps are as follows:
 
 ```{r}
 # Calculate total population values for sampled domains
@@ -274,7 +274,7 @@ head(sae_direct)
 
 Once we have calculated the direct estimator manually and using the pre-defined `direct()` function of the `sae` package, we can compare the results
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Join both into a single data frame
 direct_compare <- left_join(
   x = sae_direct[,c("Domain", "Direct")],
@@ -314,9 +314,7 @@ $$
 \widehat{Var}(\hat{\mu_d}) = \frac{\sum_{i \in s_d} w_{di}^2 (Y_{di} - \hat{\mu_d})^2}{N_d^2}
 $$
 
-With this values, we can build a confidence interval for our estimates. The confidence interval represents the range of potential values of our estimator, within a certain level of confidence.
-
-This is an important advantage of regression-based SAE methods over other alternatives such as microsimulation, since this allows us to determine how precise our estimates are.
+With this values, we can build a confidence interval for our estimates. The confidence interval represents the range of potential values of our estimator, within a certain level of confidence. This information is crucial to understand how reliable our estimates are.
 
 We will now plot our estimates with their associated 95% confidence intervals:
 
@@ -350,15 +348,48 @@ The advantage of using the `sae` package is that it allows us to easily implemen
 
 [^2]: Survey sampling—selecting individuals from the total population for a survey—can be done with or without replacement. Sampling without replacement means that individuals from a domain can only be sampled once (imagine we take a ball out of a bag and we do not put it back); with replacement means we take a ball out and put it back.
 
+## Mapping the direct estimator results
+
+Once we have calculated the direct estimator, we can map the results to better visualise the spatial distribution of the estimates:
+
+```{r, echo=FALSE, warnin=FALSE, message=FALSE}
+# Merge direct estimates with spatial data
+sae_direct_ci_shape <- shape_austria_dis |> 
+  left_join(sae_direct_ci, by = c("PB" = "Domain"))
+
+# Plot
+p <- ggplot() +
+  geom_sf(data = sae_direct_ci_shape, aes(fill = Direct), col = "gray") +
+  scale_fill_viridis_c() +
+  theme_minimal() +
+    labs(
+      title = "Direct Estimates of Equivalised Income by District",
+      fill = "Direct Estimate"
+    ) +
+  geom_sf(
+    data = sae_direct_ci_shape,
+    aes(text = paste0(
+      "District: ", PB,
+      "<br>Direct estimate: ", Direct
+    )),
+    alpha = 0
+  )
+
+ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
+
+```
+
+As we saw in the theoretical part of the workshop, the direct estimator cannot produce estimates for out-of-sample domains. In our case, we have 24 districts that are not represented in the sample, and, therefore, we do not have direct estimates for them. This is a major limitation of the direct estimator, and the reason why model-based estimators are needed.
+
 # Model-based estimators.
 
-In the previous section we have demonstrated how the direct estimation method works, together with its limitations when survey samples are scarce for certain domains. This is a common occurrence in SAE settings, and this is why model-based methods were developed. Model-based estimators incorporate auxiliary information from census data and other aggregated data sources. They are more robust to small sample sizes, since they can borrow strength from other domains. However, they require a model to be fitted to the data, which can be more complex than the direct estimator, and the results can be more difficult to interpret.
+In the previous section we have demonstrated how the direct estimation method works, together with its limitations when survey samples are scarce for certain domains. This is a common problem in small area estimation settings, and the reason why model-based methods were developed. Model-based estimators incorporate auxiliary information from external sources --census or other aggregated data sources-- to improve the estimates. These estimates are more robust to small sample sizes, since they can incorporate extra information from other domains. However, they are more complex to implement, since they require a statistical model to be fitted to the data.
 
 In this practical, we will estimate two of the main model-based estimators: the area-level model estimator, and the unit-level model estimator.
 
 ## Area-level models: The Fay-Herriot model
 
-The area-level model (also known as the Fay-Herriot model) incorporates auxiliary data at area (domain) level to improve the direct estimator. The core idea of this model is that it combines the less-reliable estimates from the direct estimator with more reliable, model-based estimates. To do so, it combines two models: the sampling model (the direct estimator) and the linking model (the model-based estimate).
+The area-level model (also known as the Fay-Herriot model) incorporates auxiliary data at area (domain) level to improve the direct estimator. The core idea of this model is that it combines the estimates from the direct estimator with more reliable, model-based estimates. To do so, it combines two models: the sampling model (the direct estimator) and the linking model (the model-based estimate).
 
 ### The sampling model
 
@@ -372,18 +403,19 @@ $$
 -   $\theta_i$: The true, but unknown, average income for district $i$.
 -   $\epsilon_i$: The sampling error, which is large for districts with small samples and small for districts with large samples (remember the plot with the confidence intervals). The variance of this error, $V_i$, is known from our survey design.
 
-### 2. The Linking Model
+### The Linking Model
 
-This is where we "borrow strength" from other areas using auxiliary data. The linking model assumes that the **true average income** ($\theta_i$) for a district is not completely random but is related to other known characteristics of that district (the auxiliary variables $x_i'$).
+The linking model is the key part of the Fay-Herriot model. This is where we introduce the auxiliary data to improve our estimates. The linking model assumes that the **true average income** ($\theta_i$) for a district is not completely random but is related to other known characteristics of that district (the auxiliary variables $x_i'$). The formula below shows how the linking model works:
 
 $$\theta_i = x_i' \beta + u_i$$
 
--   $\theta_i$: The true average income for district $i$. This is the value we want to model.
+-   $\theta_i$: The average income for district $i$. This is the value we want to model.
 
--   $x_i' \beta$: This is the **model-based part**. It's a linear regression that predicts the average income based on known, reliable data for each district.
+-   $x_i' \beta$: This is the **model-based part**. It's a linear regression that predicts the average income based on known data for each district.
 
-    -   $x_i$: A vector of auxiliary variables for district $i$.
-    -   $\beta$: A vector of regression coefficients. These are unknown parameters that the model estimates from the data. They tell us how much each auxiliary variable affects the average income across all districts. For example, if we included education as an auxiliary variable for our model, a positive $\beta$ for this variable would mean that districts with higher education tend to have higher average incomes.
+-   $x_i$: A vector of auxiliary variables for district $i$.
+
+-   $\beta$: A vector of regression coefficients. These are unknown parameters that the model estimates from the data. They tell us how much each auxiliary variable affects the average income across all districts. For example, if we included education as an auxiliary variable for our model, a positive $\beta$ for this variable would mean that districts with higher education tend to have higher average incomes.
 
 -   $u_i$: This is the **area-specific random effect**. This is a very important part of the model. It represents the part of the true average income ($\theta_i$) that cannot be explained by the auxiliary variables ($x_i$). This value is unique to the characteristics of each domain $i$. This value represents local factors that make the true value higher or lower than what the model predicts. The model assumes that these effects are normally distributed, with a mean of zero and a common $\sigma_u^2$. This means that, on average, we assume the auxiliary variables do a good job at predicting income, although we admit that there is always going to be some random variation from district to district.
 
@@ -394,8 +426,6 @@ As we saw in the formula, the Fay-Herriot model includes an area-level random ef
 ### Incorporating Spatial Autocorrelation
 
 The assumption that the area-specific random effect $u_i$ is independently and randomly distributed (IID) is, in many cases, a big assumption. In reality, we know that there might be areas for which our estimates are systematically more alike than in others. This is specially relevant in the case of spatial data, where we know, from Tobler's First Law of Geography, that *things that are closer together, are more alike*. To account for this pattern, we can modify our random effects and make them depend on space. The formula of our new effects would be:
-
-The final part of your description introduces a more advanced version of the linking model, which addresses a key limitation of the basic model.
 
 $$u = \rho_1 Wu + \epsilon$$
 
@@ -409,7 +439,25 @@ Where:
 
 In summary, the linking model provides a way to estimate the true average income for each district by combining a regression model with auxiliary variables and a unique, random effect. We can acknowledge the spatial correlation between neighboring districts, which often provides a more accurate and robust estimate.
 
-### The Intercept-Only Model in Simple Terms
+## The Intercept-Only Model
+
+The first version of the Fay-Herriot model we will implement is the intercept-only model. The intercept-only model is a special case of the Fay-Herriot model where there are no auxiliary variables other than the constant term (the intercept). This means that the linking model is simplified to:
+
+$$
+\theta_i = \beta_0 + u_i
+$$
+
+- where $\beta_0$ is the overall average mean across all areas.
+
+The full model becomes the following:
+
+$$
+\hat{\theta_i} = \beta_0 + u_i + \epsilon_i
+$$
+
+In this case, the intercept-only model assumes that the estimated income ($\hat{\theta_i}$) is a combination of the average income across all districts ($\beta_0}) and the 
+
+This model does not include any auxiliary variables, and assumes we do not have any specific data to predict the districts' estimates. The intercept-only model assumes that the best guess for our estimator is the overall value of the variable (e.g. the average country income). However, we know that each area will have its own unique area-level variance, which will deviate the value of their esitmate from the global average. 
 
 The intercept-only model is the most basic way to improve a direct estimator. It essentially assumes we do not have any specific data to predict the districts' estimate (e.g. income), and, therefore, our best guess for our estimator is the overall value of the variable (e.g. the average country income). However, we know that each area will have its unique area-level variance, which will deviate the value of their estimate from the global average. The intercept-only model will combine the global average with the direct estimates from the survey, and give more weight to the overall average when the direct estimate is either unreliable or non-existent.
 
