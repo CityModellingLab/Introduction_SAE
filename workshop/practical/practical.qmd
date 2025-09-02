@@ -447,23 +447,13 @@ $$
 \theta_i = \beta_0 + u_i
 $$
 
-- where $\beta_0$ is the overall average mean across all areas.
+- where $\beta_0$ is the overall average mean across all areas. 
 
-The full model becomes the following:
-
-$$
-\hat{\theta_i} = \beta_0 + u_i + \epsilon_i
-$$
-
-In this case, the intercept-only model assumes that the estimated income ($\hat{\theta_i}$) is a combination of the average income across all districts ($\beta_0}) and the 
-
-This model does not include any auxiliary variables, and assumes we do not have any specific data to predict the districts' estimates. The intercept-only model assumes that the best guess for our estimator is the overall value of the variable (e.g. the average country income). However, we know that each area will have its own unique area-level variance, which will deviate the value of their esitmate from the global average. 
-
-The intercept-only model is the most basic way to improve a direct estimator. It essentially assumes we do not have any specific data to predict the districts' estimate (e.g. income), and, therefore, our best guess for our estimator is the overall value of the variable (e.g. the average country income). However, we know that each area will have its unique area-level variance, which will deviate the value of their estimate from the global average. The intercept-only model will combine the global average with the direct estimates from the survey, and give more weight to the overall average when the direct estimate is either unreliable or non-existent.
+The model assumes that we do not have any specific data to predict the districts' estimates other than the already calculated direct estimates. Therefore, the estimated income is a combination of the average income across all districts and the direct estimates from the survey. The weight of each component will be determined by the variance of the direct estimates. In the extreme cases where we do not have a direct estimate for our district, the full value is the average income across all districtrs.
 
 ## Applying the area-level model to our data
 
-We will calculate the intercept-only model for our Austrian data frame. The estimates from this model should improve those we obtained through the direct estimate. Most importantly, we should be able to obtain estimates for all the districts, even the out of sample ones. To do so, we will use the `fh()` function from the `emdi` package. This function allows us to estimate the Fay-Herriot model building from previously-calculated direct estimates.
+We will calculate the intercept-only model for our Austrian exmaple. The estimates from this model should improve those we obtained through the direct estimate. Most importantly, we should be able to obtain estimates for all the districts, even the out of sample ones. To do so, we will use the `fh()` function from the `emdi` package. This function allows us to estimate the Fay-Herriot model building from previously-calculated direct estimates.
 
 First, we will prepare the data for modelling by obtaining the direct estimates and their variance. We will then estimate the FH model and calculate the 95% confidence interval of our estimates.
 
@@ -527,11 +517,15 @@ ggplot(results_ci, aes(x = reorder(Domain, FH), y = FH)) +
   theme(axis.text.y = element_text(lineheight = 1.5))
 ```
 
-The plot shows the estimated income for each of the 94 districts in Austria, with their respective confidence intervals. The intercept only model assumes that the estimated income is a combination of the average income across all districts nd the direct estimates from the survey. The weight of each component will be determined by the variance of the direct estimates. In the extreme cases where we do not have a direct estimate for our district, the full value is the average income across all districtrs. This is why our out-of-sample domains all present the same estimated value and confidence intervals.
+The plot shows the estimated income for each of the 94 districts in Austria, with their respective confidence intervals. Since the model weights the relative importance of the district's direct estimate and the average across-districts income, those districts for which a direct estimate is not available will be assigned the global average income (districts in blue). For all the other districts, the weight of the direct estimate will be higher as its variance becomes smaller.
+
+The incorporation of auxiliary information will allow for higher variability and reliance in our estimates, specially for those areas with small or zero sample sizes.
 
 ### The Fay-Herriot model with auxiliary variables
 
-In practice, we often have access to auxiliary variables that can help us improve our estimates further. These variables can be any attribute that relates to the target variable, and that is available through census or other aggregated data sources. In our example, we will use the auxiliary variables `cash` and `self_empl`.
+In practice, we often have access to auxiliary variables that can help us improve our estimates further. These variables can be any attribute that relates to the target variable, and that is available through census or other aggregated data sources. In our example, we will use the auxiliary variables `cash` and `self_empl` to improve our Fay-Herriot estimates.
+
+To calculate the Fay-Herriot model with auxiliary variables we implement the same function as in the intercept-only model, but this time we include our auxiliary information:
 
 ```{r, fig.height=12}
 # Prepare the sample data (rename columns for consistency)
@@ -552,7 +546,7 @@ combined_data <- combine_data(
 
 # Fit the Fay–Herriot model
 fh_aux <- emdi::fh(
-  fixed         = Mean ~ cash + self_empl,
+  fixed         = Mean ~ cash + self_empl, # Model including the auxiliary information
   vardir        = "Var_Direct",
   combined_data = combined_data,
   domains       = "Domain",
@@ -591,13 +585,62 @@ ggplot(results_ci, aes(x = reorder(Domain, FH), y = FH)) +
 
 ```
 
-The plot shows the estimated income for each district, incorporating the auxiliary information on `cash` and `self_empl`. These new estimates are more precise than the intercept-only model, as we see from the confidence intervals. Even the estimates for the out-of-sample districts are now more precise, since the model uses the auxiliary variables to "borrow strength" from the in-sample districts. This is a key advantage of the model-based approach over the direct estimator, and the intercept-only model. 
+The plot shows the estimated income for each district, incorporating the auxiliary information on `cash` and `self_empl`. These new estimates are more precise than the intercept-only model --and even more so than the direct estimator-- as we see from the confidence intervals. Even the estimates for the out-of-sample districts are now more precise, since the model uses the auxiliary variables to "borrow strength" from the other districts. This is a key advantage of the model-based approach over the direct estimator and the intercept-only model.
+
+To visualise the spatial distribution of the estimates, we can plot them in a map:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Add spatial data to estimates
+results_ci_shape <- shape_austria_dis |> 
+  left_join(results_ci, by = c("PB" = "Domain"))
+
+# Plot
+p <- ggplot() +
+  geom_sf(data = results_ci_shape, aes(fill = FH), col = "gray", lwd = 0.1) +
+  scale_fill_viridis_c() +
+  theme_minimal() +
+    labs(
+      title = "Fay-Herriot Estimates of Equivalised Income by District",
+      fill = "FH Estimate"
+    ) +
+  geom_sf(
+    data = results_ci_shape,
+    aes(text = paste0(
+      "District: ", PB,
+      "<br>FH estimate: ", FH
+    )),
+    alpha = 0
+  )
+
+ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
+```
+
+This time we observe how estimates have been calculated for all areas in Austria. The Fay-Herriot model has used the auxiliary information to complement the existing direct estimates --for in-sample domains-- and used a combination of the average income across domains and auxiliary data to make an *informed guess* about the income levels of out-of-sample domains. Overall, these estimates improve those produced by the direct estimator and the intercept-only model.
 
 ## Unit-level models -- The Battese-Harter-Fuller model
 
+The final model-based method for small area estimation we will explore in this practical is the unit-level model. Unit-level models use individual survey values as the independent variable, as opposed to the area-level model which used the direct estimates. 
 
+The unit-level model can be interpreted as a bottom-up approach to producing small area estimates. Since these models employ individual-level data, the estimates can be aggregated at any desired spatial level, which provides a great advantage with respect to area-level models where estimates could only be aggregated at the same level as the available auxiliary data.
+
+Mathematically, the unit-level model can be estimated using the Battese-Harter-Fuller model:
+
+$$
+\theta_{id} = \mathbf{x}_{id}^\top \beta + u_d + \epsilon_{id}
+$$
+
+- $\theta_{id}$ is the estimate at unit-level.
+- $\mathbf{x}_{id}^\top$ is the auxiliary information at unit-level.
+- $\beta$ is the vector of coefficients that the model estimates.
+- $u_d$ is the area-level error.
+- $\epsilon_{id}$ is the unit-level error.
+
+The main problem of unit-level approaches is the data availability. It assumes access of unit-specific auxiliary data ($\mathbf{x}_id$) for each element of the survey $i$ and domain $d$. Access to this information can be challenging, specially due to data confidenciality issues. However, a common approach for overcoming this issue is the use of synthetic population data as a mirror of the full population.
+
+In this practical, we will use the `ebp` function from the `emdi` package to compute the unit-level estimator. We will use the population data provided in the EU-SILC data for Austria as our unit-level auxiliary information, and the variables `cash` and `self_empl` as auxiliary variables as we did in the area-level model.
 
 ```{r}
+# Estimate unit-level model
 bhf_aux <- ebp(
   fixed        = eqIncome ~  cash + self_empl, # model formula
   pop_data     = eusilcA_pop,    # population frame
@@ -612,19 +655,28 @@ bhf_aux <- ebp(
 )
 ```
 
-```{r, fig.height=12, echo=FALSE, warning=FALSE, message=FALSE}
-summary(bhf_aux)                  # model + data info
+To visualise the results of our model we will plot the estimates and confidence intervals as we did with our previous examples:
+
+```{r, fig.height=12, echo=TRUE, warning=FALSE, message=FALSE}
+# Format results into a data frame
 results_bhf_aux <- as.data.frame(emdi::estimators(bhf_aux, MSE=TRUE)) # domain estimates + MSE
 
+# Calculate confidence interval (95%)
 ebp_ci <- results_bhf_aux %>%
   mutate(
     lower = Mean - 1.96 * sqrt(Mean_MSE),
     upper = Mean + 1.96 * sqrt(Mean_MSE)
   )
 
-# 3) Plot (taller figure so 94 areas aren’t cramped)
+# Add an oos column for oos districts
+ebp_ci <- ebp_ci |> 
+  mutate(
+    oos = ifelse(Domain %in% eusilcA_smp$district, "In-sample", "Out-of-sample")
+  )
+
+# Plot results
 p <- ggplot(ebp_ci, aes(x = reorder(Domain, Mean), y = Mean)) +
-  geom_errorbar(aes(ymin = lower, ymax = upper), colour = "gray50", width = 0.3) +
+  geom_errorbar(aes(ymin = lower, ymax = upper, colour = oos), width = 0.3) +
   geom_point(color = "#264653", size = 2) +
   coord_flip() +
   labs(
@@ -634,20 +686,22 @@ p <- ggplot(ebp_ci, aes(x = reorder(Domain, Mean), y = Mean)) +
   ) +
   theme_minimal(base_size = 12) +
   theme(axis.text.y = element_text(lineheight = 1.5))
-
 p
 ```
 
-```{r}
+In this case we observe how the confidence intervals for the unit-level model are wider than those for the area-level model. This difference can be attributed to the fact that the uncertainty in the case of the unit-level model comes from two sources: the domain-level uncertainty, and the individual-level uncertainty. This makes our confidence intervals wider. Additionally, out-of-sample domains systematically present wider confidence intervals than within-sample domains. This is expected, and can be attributed to the lack of individual-level data for the out-of-sample domains.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Add spatial data
 shape_district_results <- shape_austria_dis %>%
   left_join(ebp_ci, by = c("PB" = "Domain"))
 
-ggplot() +
+p <- ggplot() +
   geom_sf(
     data = shape_district_results,
     aes(fill = Mean, text = paste("District:", PB, "<br>Mean Income:", round(Mean, 2))),
-    col = NA
+    col = "gray",
+    lwd = 0.1
   ) +
   scale_fill_viridis_c(option = "D", direction = 1) +
   labs(
@@ -655,12 +709,28 @@ ggplot() +
     fill = "Mean Income"
   ) +
   theme_void() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom")  +
+  geom_sf(
+    data = shape_district_results,
+    aes(text = paste0(
+      "District: ", PB,
+      "<br>FH estimate: ", Mean
+    )),
+    alpha = 0
+  )
+
+ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
 ```
+
+Again, we observe how the model has produced estimates for all our domains. In this case, the unit-level model has taken a bottom-up approach where individual estimates have been aggregated at our desired domain level. 
 
 # Ground truth comparison
 
+As a final step, and a summary of our practical, we are going to compare the results of our estimators with the groundtruth data. In real life we do not have access to this information --otherwise we would not need small area estimation methods!-- but we can use the *groundtruth* data attached to our Austrian sample to check how our different models performed.
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Join groundtruth with estimates
+
 truth_df <- eusilcA_pop |> 
   group_by(district) |>
   summarise(
@@ -670,11 +740,6 @@ truth_df <- eusilcA_pop |>
     Domain = district,
     Truth = mean_income
   )
-```
-
-```{r}
-library(dplyr)
-library(tidyr)
 
 # Standardise method-specific frames
 direct_df <- results_fh_aux %>%
@@ -696,11 +761,8 @@ bhf_df <- results_bhf_aux %>%
 compare_df <- bind_rows(direct_df, fh_int_df, fh_aux_df, bhf_df) %>%
   left_join(truth_df, by = "Domain")
 
-```
 
-## Per-domain comparison
-
-```{r}
+# Evaluate the performance for each domain
 compare_eval <- compare_df %>%
   mutate(
     Error   = Estimate - Truth,
@@ -711,11 +773,8 @@ compare_eval <- compare_df %>%
     upper   = Estimate + 1.96*SE,
     Covered = ifelse(!is.na(Truth) & !is.na(lower) & Truth >= lower & Truth <= upper, 1L, NA_integer_)
   )
-```
 
-## Summary metrics
-
-```{r}
+# Summarise the comparison
 summary_metrics <- compare_eval %>%
   group_by(Method) %>%
   summarise(
@@ -734,13 +793,15 @@ summary_metrics <- compare_eval %>%
   ) %>%
   arrange(RMSE)
 
+# Summarise outputs
 summary_metrics
 ```
 
-```{r}
-library(dplyr)
-library(ggplot2)
+The table shows a series of metrics that report the performance of the different methods when compared to the groundtruth. We see that the direct estimator performs quite well in our example (high correlation) but only includes 70 out of the 94 observations. The Fay-Herriot model with auxiliary data outperforms the direct estimator and incorporates the 24 out-of-sample districts. The worst-performing model was the intercept-only area-level model.
 
+We can also visualise these results through their corresponding correlation plots:
+
+```{r, echo=FALSE}
 plot_df <- compare_eval %>% filter(!is.na(Truth), !is.na(Estimate))
 
 ggplot(plot_df, aes(x = Truth, y = Estimate)) +
@@ -750,3 +811,15 @@ ggplot(plot_df, aes(x = Truth, y = Estimate)) +
   labs(x = "True value", y = "Estimator", title = "Estimator vs Truth") +
   theme_minimal()
 ```
+
+# Practical summary and key take-aways
+
+This practical has provided a real-life application of small area estimation methods on a sample data set. We started by calculating the direct estimator and exploring the relevance of survey weights in generating this type of estimator. Despite its easy-to-apply nature, the direct estimator has an important limitation: it only produces estimates for sampled domains. Additionally, it is very sensitive to small samples, making the estimates unreliable. In our example, 24 out of 94 domains were out of sample, which means that an important proportion of areas are being left out. 
+
+To solve this problem, we turned to model-based estimators. Model-based methods allow for incorporating auxiliary information from census or other aggregated data sources in order to *borrow strength* and produce more reliable estimates. In a first, simplified version of the Fay-Herriot area-level model, we estimated an intercept-only model where income was estimated using information from the direct estimator and incorporating area-level random effects. The results of this model did not perforfm better than those of the direct estimator, although they allowed us to produce estimates for out-of-sample domains based on the aggregate average of the country's income.
+
+Incorporating area-level auxiliary data to the model increase its performance. The additional information obtained through two area-level covariates allowed us to produce *better-informed guesses*, in which proved to be the best-performing model overall.
+
+The final model estimated in the practical was the unit-level model. In this case, individual-level auxiliary information is required to produce aggregated estimates, allowing for more flexibility at the time of choosing the spatial resolution of our final estimates. The model, however, presented higher levels of uncertainty than the area-level one, since both individuals and domains now become sources of variation. Out-of-sample domains showed higher uncertainty than in-sample domains.
+
+Overall, this practical has provided an overview of the methods, and a basic demonstration of code to apply small area estimation methods to other applications.
