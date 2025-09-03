@@ -16,5 +16,8 @@
   },
   "workshop/practical/practical.qmd": {
     "practical.html": "1d7bad73"
+  },
+  "workshop/slides/slides.qmd": {
+    "slides.html": "7ee52556"
   }
 }

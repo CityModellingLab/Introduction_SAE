@@ -611,8 +611,9 @@ p <- ggplot() +
     )),
     alpha = 0
   )
+p
 
-ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
+#ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
 ```
 
 This time we observe how estimates have been calculated for all areas in Austria. The Fay-Herriot model has used the auxiliary information to complement the existing direct estimates --for in-sample domains-- and used a combination of the average income across domains and auxiliary data to make an *informed guess* about the income levels of out-of-sample domains. Overall, these estimates improve those produced by the direct estimator and the intercept-only model.
@@ -813,6 +814,9 @@ ggplot(plot_df, aes(x = Truth, y = Estimate)) +
 ```
 
 # Practical summary and key take-aways
+
+Small area estimation is a methodology that allows us to make the most out of limited sample sizes. In this practical, we have explored how to apply SAE techniques to real-life data using a sample data set. Starting from the simplest method --the Horvitz-Thompson direct estimator-- we calculated the district-level equivalised household income in Austria, building on individual survey data. The problem we try to solve in small area estimation is calculating reliable estimates of our target variable based on limited sample sizes. In our exmaple, 24 out of the 94 districts in our data.
+
 
 This practical has provided a real-life application of small area estimation methods on a sample data set. We started by calculating the direct estimator and exploring the relevance of survey weights in generating this type of estimator. Despite its easy-to-apply nature, the direct estimator has an important limitation: it only produces estimates for sampled domains. Additionally, it is very sensitive to small samples, making the estimates unreliable. In our example, 24 out of 94 domains were out of sample, which means that an important proportion of areas are being left out. 
 
