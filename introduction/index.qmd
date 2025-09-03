@@ -1,4 +1,0 @@
----
-title: Introduction to Small Area Estimation
----
-
