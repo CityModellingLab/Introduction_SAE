@@ -27,7 +27,7 @@ Please, make sure you have `R version 4.5.1 (2025-06-13)` installed in your lapt
 ```{r, message=FALSE}
 # Install required packages if not already installed
 required_packages <- c(
-  "sae", "emdi", "saeTrafo", "hbsae", "SUMMER", "survey",
+  "sae", "emdi", "saeTrafo", "hbsae", "survey",
   "dplyr", "tidyr", "purrr", "sf", 
   "ggplot2", "hrbrthemes", "GGally", "patchwork", "plotly"
 )
@@ -37,16 +37,9 @@ if (length(to_install) > 0) {
   install.packages(to_install)
 }
 
-# Install INLA for Bayesian SAE estimators
-if (!isTRUE(requireNamespace("INLA", quietly = TRUE))) {
-  install.packages("INLA", repos=c(getOption("repos"), 
-                  INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
-}
-
 library(sae)          # Small area estimation models
 library(emdi)         # Example datasets
 library(saeTrafo)     # For domain sizes
-library(SUMMER)       # Bayesian SAE
 library(survey)       # Survey designs
 
 library(dplyr)        # For data wrangling
@@ -423,7 +416,7 @@ $$\theta_i = x_i' \beta + u_i$$
 
 As we saw in the formula, the Fay-Herriot model includes an area-level random effect ($u_i$) and an error term ($\epsilon_i$) . This is known as the sampling error, and represents the error in our measurement. It is the random variability that comes from our survey sampling process. For domains with small samples, our error terms will be larger than for domains with larger samples.
 
-### Incorporating Spatial Autocorrelation
+<!-- ### Incorporating Spatial Autocorrelation
 
 The assumption that the area-specific random effect $u_i$ is independently and randomly distributed (IID) is, in many cases, a big assumption. In reality, we know that there might be areas for which our estimates are systematically more alike than in others. This is specially relevant in the case of spatial data, where we know, from Tobler's First Law of Geography, that *things that are closer together, are more alike*. To account for this pattern, we can modify our random effects and make them depend on space. The formula of our new effects would be:
 
@@ -437,7 +430,7 @@ Where:
 
 -   $\epsilon$ is the new error term. It is assumed to be independent and identically distributed, and it is now part of the new $u$ equation.
 
-In summary, the linking model provides a way to estimate the true average income for each district by combining a regression model with auxiliary variables and a unique, random effect. We can acknowledge the spatial correlation between neighboring districts, which often provides a more accurate and robust estimate.
+In summary, the linking model provides a way to estimate the true average income for each district by combining a regression model with auxiliary variables and a unique, random effect. We can acknowledge the spatial correlation between neighboring districts, which often provides a more accurate and robust estimate. -->
 
 ## The Intercept-Only Model
 
@@ -457,7 +450,7 @@ We will calculate the intercept-only model for our Austrian exmaple. The estimat
 
 First, we will prepare the data for modelling by obtaining the direct estimates and their variance. We will then estimate the FH model and calculate the 95% confidence interval of our estimates.
 
-```{r, fig.height=12}
+```{r, fig.height=12, message=FALSE, warning=FALSE}
 
 # Prepare the sample data (rename columns for consistency)
 smpAgg <- sae_direct %>%
@@ -481,7 +474,7 @@ fh_int <- emdi::fh(
   vardir        = "Var_Direct",
   combined_data = combined_data,
   domains       = "Domain",
-  method        = "ml",              
+  method        = "reml",              
   MSE           = TRUE
 )
 
@@ -527,7 +520,7 @@ In practice, we often have access to auxiliary variables that can help us improv
 
 To calculate the Fay-Herriot model with auxiliary variables we implement the same function as in the intercept-only model, but this time we include our auxiliary information:
 
-```{r, fig.height=12}
+```{r, fig.height=12, message=FALSE, warning=FALSE}
 # Prepare the sample data (rename columns for consistency)
 smpAgg <- sae_direct %>%
   mutate(Var_Direct = SD^2,       # variance of the direct estimate
@@ -550,8 +543,9 @@ fh_aux <- emdi::fh(
   vardir        = "Var_Direct",
   combined_data = combined_data,
   domains       = "Domain",
-  method        = "ml",              
-  MSE           = TRUE
+  method        = "reml",              
+  MSE           = TRUE,
+  interval      = c(1e-12, 1e6)              # widen variance search space
 )
 
 # Extract estimates (includes OOS areas)
@@ -611,9 +605,8 @@ p <- ggplot() +
     )),
     alpha = 0
   )
-p
 
-#ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
+ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
 ```
 
 This time we observe how estimates have been calculated for all areas in Austria. The Fay-Herriot model has used the auxiliary information to complement the existing direct estimates --for in-sample domains-- and used a combination of the average income across domains and auxiliary data to make an *informed guess* about the income levels of out-of-sample domains. Overall, these estimates improve those produced by the direct estimator and the intercept-only model.
@@ -640,7 +633,7 @@ The main problem of unit-level approaches is the data availability. It assumes a
 
 In this practical, we will use the `ebp` function from the `emdi` package to compute the unit-level estimator. We will use the population data provided in the EU-SILC data for Austria as our unit-level auxiliary information, and the variables `cash` and `self_empl` as auxiliary variables as we did in the area-level model.
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # Estimate unit-level model
 bhf_aux <- ebp(
   fixed        = eqIncome ~  cash + self_empl, # model formula
