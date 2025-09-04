@@ -791,7 +791,7 @@ summary_metrics <- compare_eval %>%
 summary_metrics
 ```
 
-The table shows a series of metrics that report the performance of the different methods when compared to the groundtruth. We see that the direct estimator performs quite well in our example (high correlation) but only includes 70 out of the 94 observations. The Fay-Herriot model with auxiliary data outperforms the direct estimator and incorporates the 24 out-of-sample districts. The worst-performing model was the intercept-only area-level model.
+The table shows a series of metrics that report the performance of the different methods when compared to the groundtruth. We see that the direct estimator performs quite well in our example (high correlation) but only includes 70 out of the 94 observations. The Fay-Herriot model with auxiliary data also provides high correlation and incorporates the 24 out-of-sample districts. The worst-performing model was the intercept-only area-level model.
 
 We can also visualise these results through their corresponding correlation plots:
 
@@ -815,7 +815,7 @@ This practical has provided a real-life application of small area estimation met
 
 To solve this problem, we turned to model-based estimators. Model-based methods allow for incorporating auxiliary information from census or other aggregated data sources in order to *borrow strength* and produce more reliable estimates. In a first, simplified version of the Fay-Herriot area-level model, we estimated an intercept-only model where income was estimated using information from the direct estimator and incorporating area-level random effects. The results of this model did not perforfm better than those of the direct estimator, although they allowed us to produce estimates for out-of-sample domains based on the aggregate average of the country's income.
 
-Incorporating area-level auxiliary data to the model increase its performance. The additional information obtained through two area-level covariates allowed us to produce *better-informed guesses*, in which proved to be the best-performing model overall.
+Incorporating area-level auxiliary data to the model increased its performance. The additional information obtained through two area-level covariates allowed us to produce *better-informed guesses* of our target variable.
 
 The final model estimated in the practical was the unit-level model. In this case, individual-level auxiliary information is required to produce aggregated estimates, allowing for more flexibility at the time of choosing the spatial resolution of our final estimates. The model, however, presented higher levels of uncertainty than the area-level one, since both individuals and domains now become sources of variation. Out-of-sample domains showed higher uncertainty than in-sample domains.
 

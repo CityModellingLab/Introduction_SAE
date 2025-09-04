@@ -1,0 +1,904 @@
+---
+title: "A practical guide on Small Area Estimation"
+author:
+  - name: Clara Peiret-García
+    email: c.peiret-garcia@ucl.ac.uk
+    affiliations:
+      - name: Centre for Advanced Spatial Analysis, UCL
+  - name: Adam Dennett
+    affiliations:
+      - name: Centre for Advanced Spatial Analysis, UCL
+  - name: Anna Freni Sterrantino
+    affiliations:
+      - name: Alan Turing Institute | Imperial College London
+  - name: Esra Suel
+    affiliations:
+      - name: Centre for Advanced Spatial Analysis, UCL
+  - name: Gerard Casey
+    affiliations:
+      - name: Arup | Centre for Advanced Spatial Analysis, UCL
+      
+format: html
+editor: visual
+---
+
+
+
+Please, make sure you have `R version 4.5.1 (2025-06-13)` installed in your laptop. You can download it from here: <https://cran.r-project.org/>
+
+
+
+```{r, message=FALSE}
+# Install required packages if not already installed
+required_packages <- c(
+  "sae", "emdi", "saeTrafo", "hbsae", "survey",
+  "dplyr", "tidyr", "purrr", "sf", 
+  "ggplot2", "hrbrthemes", "GGally", "patchwork", "plotly"
+)
+
+to_install <- setdiff(required_packages, rownames(installed.packages()))
+if (length(to_install) > 0) {
+  install.packages(to_install)
+}
+
+library(sae)          # Small area estimation models
+library(emdi)         # Example datasets
+library(saeTrafo)     # For domain sizes
+library(survey)       # Survey designs
+
+library(dplyr)        # For data wrangling
+library(tidyr)        # For data wrangling
+library(purrr)        # For data wrangling
+library(sf)           # For mapping
+library(ggplot2)      # For visualisations
+library(hrbrthemes)   # For visualisations
+library(GGally)       # For visualisations
+library(patchwork)    # For visualisations
+library(viridis)      # For visualisations
+library(cowplot)      # For visualisations
+library(plotly)       # For interactive visualisations
+```
+
+
+
+# Introduction
+
+In this practical we will put into practice the concepts we learnt on the theoretical session of the workshop. Using survey data, we will calculate direct and model-based income estimators. We will explore the different alternatives available when implementing these methods, which will help us choose the most adequate option given data availability. To better understand the implications of using different models, we will compare the results of the estimates generated through different methods. You can access the `.qmd` document for this practical from [this link](https://github.com/cpeiretgarcia/SAE_workshop_CUPUM/blob/main/practical.qmd).
+
+# Data
+
+For this workshop we will be using the European Union Statistics on Income and Living Conditions (EU-SILC). Specifically, we will be using the Austrian EU-SILC data sets available through the `emdi` package. EU-SILC provides detailed information on attributes related to income, material deprivation, labour, housing, childcare, health, access to and use of services, and education.
+
+From the package `emdi` we can load a set of data related to the EU-SILC survey. `eusilcA_smp` is the random independent sample, where each row represents one individual, and each column represents a unit-level attribute. In total, the sample comprises 1,945 individuals. `eusilcA_popAgg` comprises the area-level covariates for all domains[^1]. `eusilcA_pop` is the total population -- it comprises 25,000 observations which we will assume add up to the total population of Austria for this example. Finally, `eusilcA_prox` is the adjacency matrix for every district in Austria.
+
+[^1]: Remember that a domain refers to a small geographic area or a subpopulation (e.g., age group or income class) for which we want to calculate the small area estimation.
+
+
+
+```{r}
+# Load data
+data("eusilcA_smp")     # Random independent Sample
+data("eusilcA_popAgg")  # Aggregated covariates at district level
+data("eusilcA_pop")     # Population level data
+data("eusilcA_prox")    # Adjacency matrix
+data("eusilcA_smpAgg")  # Aggregated sample data
+
+# Recode the domain variable as character
+eusilcA_smp$district <- droplevels(eusilcA_smp$district)
+eusilcA_smp$district <- as.character(eusilcA_smp$district)
+```
+
+
+
+Let us start by having a look at the sample data `eusilcA_smp`. Each row in the sample represents one individual, and for each of them we have information on a wide range of economic and demographic attributes. In this practical, our **target variable** will be the the equivalised household income (`eqIncome`), which represents the household income adjusted by household composition characteristics.
+
+
+
+```{r}
+head(eusilcA_smp)
+```
+
+
+
+We can also have a look at the spatial distribution of the observations in the sample.
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+# Load geospatial data and set CRS
+load_shapeaustria()
+shape_austria_dis <- st_set_crs(shape_austria_dis, 4326) # Set CRS
+
+# Calculate the number of observations per district in the sample
+smp_district_summary <- eusilcA_smp %>%
+  group_by(district) %>%
+  summarise(
+    n = n(),  # Count of observations
+    across(where(is.numeric), mean, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Join the summarised sample to the district boundary data and leave NAs
+shape_district_summary <- shape_austria_dis %>%
+  left_join(smp_district_summary, by = c("PB" = "district"))
+
+# Interactive map
+p <- ggplot() +
+  geom_sf(
+    data = shape_district_summary,
+    aes(fill = n, text = paste("District:", PB, "<br>Sample Size:", n)),
+    col = NA
+  ) +
+  scale_fill_viridis_c(option = "D", direction = 1) +
+  labs(
+    title = "Number of Observations per District",
+    fill = "Sample Size"
+  ) +
+  theme_void()
+
+ggplotly(p, tooltip = "text")
+```
+
+
+
+We see that the observations are unequally distributed across the different districts. We see higher sample sizes in larger cities, specially in Vienna, the capital and most populous city in the country. Furthermore, we have 24 districts that are not represented in the sample. This will sigificantly affect the results of our estimators, since, as we learnt in the theoertical bit of the workshop, some methods only generate outputs for areas with sampled observations.
+
+We can further explore what our data looks like. Our target variable `eqIncome` follows a skewed distribution, with majority of individuals concentrated around lower income values (€ 20,000). We see very high agreement between sample values and population values.
+
+
+
+```{r, echo = FALSE}
+ggplot() +
+  geom_histogram(data = eusilcA_pop, aes(x = eqIncome, fill = "Population"), 
+                 position = "identity", alpha = 0.5, bins = 50, color = "white") +
+  geom_histogram(data = eusilcA_smp, aes(x = eqIncome, fill = "Sample"), 
+                 position = "identity", alpha = 0.5, bins = 50, color = "white") +
+  scale_fill_manual(name = "", values = c("Population" = "#ca6702", "Sample" = "#69b3a2")) +
+  labs(
+    title = "Equivalised Income Distribution",
+    x = "eqIncome",
+    y = "Count"
+  ) +
+    theme_minimal()
+```
+
+
+
+Now that we have a better understanding of the data, we can start calculating our estimators.
+
+# Direct estimator
+
+We will start by computing the most simple SAE estimator -- the direct estimator. Direct estimators use only information collected from the domain of interest. They are relatively simple to obtain, since they use the sample weights and population values. However, they are very sensitive to small sample sizes.
+
+To demonstrate how the direct estimator works, we will first compute it manually but following the Horvitz-Thompson estimator of domain means and its formula:
+
+$$
+\hat{\bar{Y_d}} = \frac{1}{N_d} \sum_{i \in s_d} w_{di}Y_{di}
+$$
+
+where $N_d$ is the population at the domain of interest $d$; $s_d$ is the set of sampled observations in domain $d$; $w_{di}$ is the sample weight for unit $i$ in domain $d$; and $Y_{di}$ is the observation of the target variable for unit $i$ in domain $d$, for all $i$ in $S_d$.
+
+## Understanding the sampling weights
+
+Before we manually calculate the direct estimator, we will have a closer look at the sampling weights ($w_{di}$). These values represent the survey weigths, and we can find them in the `weights` column of our sample data set `eusilcA_smp`. In our survey, the weights are calculated as the inverse probabilities of selection or, in other words, the inverse of the likelyhood of an individual of the population being sampled. The value indicates the number of survey respondents in the population. This information can usually be found in the documentation of the survey, together with any clusters or strata that might have been defined by the surveyors.
+
+These *design weights* can be calculated following this formula:
+
+$$
+weight_i = \frac{N_d}{n_d}
+$$
+
+To manually calculate the weights, we can do the following:
+
+
+
+```{r}
+# Check that each district has different weights assigned
+# Count number of times each weigth repeats itself in the sample (in total we should get 70 rows)
+weights_per_district <- eusilcA_smp |> 
+  select(district, weight) |> 
+  distinct()
+
+print(paste0("We get a total of ", nrow(weights_per_district), " unique weights."))
+
+# Calculate the weights manually
+## Count population per district
+pop_count <- eusilcA_pop |>
+  count(district, name = "N_d")
+
+## Count sample per district
+smp_count <- eusilcA_smp |>
+  count(district, name = "n_d")
+
+## Merge and calculate weight
+weight_check <- left_join(smp_count, pop_count, by = "district") |>
+  mutate(calculated_weight = N_d / n_d)
+
+## Add weights from sample and check they are the same
+weight_check <- weight_check |> 
+  left_join(weights_per_district, by = "district")
+```
+
+
+
+And now we can produce a plot to check if the manually calculated weights match the survey weights.
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## Plot to check if they are the same
+p <- ggplot(weight_check, aes(x = calculated_weight, y = weight)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey60") +
+  geom_point(
+    aes(text = paste0(
+      "District: ", district,
+      "<br>Calculated: ", round(calculated_weight, 3),
+      "<br>Survey: ", round(weight, 3)
+    )),
+    alpha = 0.7
+  ) +
+  labs(
+    title = "Calculated Weights vs Survey Weights",
+    x = "Calculated Weights",
+    y = "Survey Weights"
+  ) +
+  theme_minimal()
+
+ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
+```
+
+
+
+The plot shows that the manually calculated weights match the survey weights. The weight for Vienna is much larger than the weights for the other districts. This is expected, since Vienna is the largest city in Austria, and therefore has a larger population.
+
+## Manual calculation of the direct estimator
+
+Now that we understand how the weights were calcualated, let us now calculate the direct estimator manually. We will follow the Horvitz-Thompson estimator formula, which we introduced above. The steps are as follows:
+
+
+
+```{r}
+# Calculate total population values for sampled domains
+N <- pop_count |> filter(pop_count$district %in% eusilcA_smp$district)
+
+# Add N to the sample data
+dir_df <- eusilcA_smp |> 
+  left_join(N, by = "district") |> 
+  dplyr::select(district, eqIncome, weight, N_d)
+
+# Calculate direct estimator manually for each domain
+manual_direct <- dir_df |> 
+  mutate(w_Y = weight * eqIncome) |> 
+  group_by(district, N_d) |> 
+  summarise(sum_wY = sum(w_Y, na.rm = TRUE), .groups = "drop") |> 
+  mutate(dir_est_manual = sum_wY / N_d)
+
+# See results
+head(manual_direct)
+```
+
+
+
+The values in the `dir_est_manual` column represent the direct estimator of the mean equivalised income for each district. The values are calculated by summing the product of the sample weights and the target variable, and then dividing by the population size of each district.
+
+## Direct estimator using the `sae` package
+
+Now, we will calculate the direct estimator using the `sae` package. The `direct()` function computes the Horvitz-Thompson estimator, the same one we have just manually computed. In addition to the direct estimator of the mean, the `direct()` function also gives us the standard deviation and coefficient of variation for each domain.
+
+
+
+```{r}
+# Calculate the direct estimator manually
+sae_direct <- sae::direct(
+  y = eusilcA_smp$eqIncome,        # Individual values of the target variable
+  dom = eusilcA_smp$district,      # Domain names
+  sweight = eusilcA_smp$weight,    # Sampling weights
+  domsize = N,                     # Data frame with domain names and the corresponding population sizes.
+  replace = FALSE                  # Sampling conducted without replacement
+)
+
+# See results
+head(sae_direct)
+```
+
+
+
+Once we have calculated the direct estimator manually and using the pre-defined `direct()` function of the `sae` package, we can compare the results
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Join both into a single data frame
+direct_compare <- left_join(
+  x = sae_direct[,c("Domain", "Direct")],
+  y = manual_direct[,c("district", "dir_est_manual")],
+  by = c("Domain" = "district")
+)
+
+# Compare values
+p <- ggplot(direct_compare, aes(x = Direct, y = dir_est_manual)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey60") +
+  geom_point(
+    aes(text = paste0(
+      "District: ", Domain,
+      "<br>`sae` Direct: ", round(Direct, 3),
+      "<br>Manual: ", round(dir_est_manual, 3)
+    )),
+    alpha = 0.7
+  ) +
+  labs(
+    title = "`sae` direct estimator vs manual direct estimator",
+    x = "`sae` direct estimator",
+    y = "Manual direct estimator"
+  ) +
+  theme_minimal()
+
+ggplotly(p, tooltip = "text") %>%
+  layout(hovermode = "closest")
+```
+
+
+
+The plot shows a perfect match between the manually computed direct estimator values and the values from the `direct()` function of the `sae` package.
+
+## Making sense of the results -- Understanding uncertainty
+
+The `direct()` function has given us the direct esitmates of the equivalised income, and the standard deviation for each district. The standard deviation represents how spread the values are around the mean. To calculate the standard deviation, we can use the following formula:
+
+$$
+\widehat{Var}(\hat{\mu_d}) = \frac{\sum_{i \in s_d} w_{di}^2 (Y_{di} - \hat{\mu_d})^2}{N_d^2}
+$$
+
+With this values, we can build a confidence interval for our estimates. The confidence interval represents the range of potential values of our estimator, within a certain level of confidence. This information is crucial to understand how reliable our estimates are.
+
+We will now plot our estimates with their associated 95% confidence intervals:
+
+
+
+```{r, fig.height=10, echo = FALSE}
+# Add confidence intervals
+sae_direct_ci <- sae_direct |> 
+  mutate(
+    lower = Direct - 1.96 * SD,
+    upper = Direct + 1.96 * SD
+  )
+
+# Plot
+ggplot(sae_direct_ci, aes(x = reorder(Domain, Direct), y = Direct)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), colour = "gray", width = 0.3) +
+  geom_point(color = "#264653") +
+  coord_flip() +
+  labs(
+    x = "District",
+    y = "Equivalised income (Direct Estimate)",
+    title = "Direct Estimates of Equivalised Income (95% CI)"
+  ) +
+  theme_minimal() +
+  theme(
+  axis.text.y = element_text(lineheight = 1.5)  # Default is 1, try 1.3–2
+)
+```
+
+
+
+The plot shows the value of the direct estimator and the confidence interval around that value. The confidence interval is calculated as the mean plus and minus the standard deviation multiplied by a constant value (1.96) that comes from the standard normal distribution at a 95% confidence interval. The interval represents all the possible "true values'' of our estimator. Longer error bars indicate higher uncertainty around the estimates --there is a larger range of potential true values-- while shorter error bars indicate lower uncertainty --the range of potential values is more constrained.
+
+The advantage of using the `sae` package is that it allows us to easily implement variations of the direct estimate calculation. In some cases, the survey might have been conducted following different surveying strategies in a more flexible way. For instance, it might be that the sampling was conducted with replacement, instead of without replacement[^2], or it could be that we do not have access to the domain of interest population sizes, in which case we would have to proceed differently to calculate our direct estimates.
+
+[^2]: Survey sampling—selecting individuals from the total population for a survey—can be done with or without replacement. Sampling without replacement means that individuals from a domain can only be sampled once (imagine we take a ball out of a bag and we do not put it back); with replacement means we take a ball out and put it back.
+
+## Mapping the direct estimator results
+
+Once we have calculated the direct estimator, we can map the results to better visualise the spatial distribution of the estimates:
+
+
+
+```{r, echo=FALSE, warnin=FALSE, message=FALSE}
+# Merge direct estimates with spatial data
+sae_direct_ci_shape <- shape_austria_dis |> 
+  left_join(sae_direct_ci, by = c("PB" = "Domain"))
+
+# Plot
+p <- ggplot() +
+  geom_sf(data = sae_direct_ci_shape, aes(fill = Direct), col = "gray") +
+  scale_fill_viridis_c() +
+  theme_minimal() +
+    labs(
+      title = "Direct Estimates of Equivalised Income by District",
+      fill = "Direct Estimate"
+    ) +
+  geom_sf(
+    data = sae_direct_ci_shape,
+    aes(text = paste0(
+      "District: ", PB,
+      "<br>Direct estimate: ", Direct
+    )),
+    alpha = 0
+  )
+
+ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
+
+```
+
+
+
+As we saw in the theoretical part of the workshop, the direct estimator cannot produce estimates for out-of-sample domains. In our case, we have 24 districts that are not represented in the sample, and, therefore, we do not have direct estimates for them. This is a major limitation of the direct estimator, and the reason why model-based estimators are needed.
+
+# Model-based estimators.
+
+In the previous section we have demonstrated how the direct estimation method works, together with its limitations when survey samples are scarce for certain domains. This is a common problem in small area estimation settings, and the reason why model-based methods were developed. Model-based estimators incorporate auxiliary information from external sources --census or other aggregated data sources-- to improve the estimates. These estimates are more robust to small sample sizes, since they can incorporate extra information from other domains. However, they are more complex to implement, since they require a statistical model to be fitted to the data.
+
+In this practical, we will estimate two of the main model-based estimators: the area-level model estimator, and the unit-level model estimator.
+
+## Area-level models: The Fay-Herriot model
+
+The area-level model (also known as the Fay-Herriot model) incorporates auxiliary data at area (domain) level to improve the direct estimator. The core idea of this model is that it combines the estimates from the direct estimator with more reliable, model-based estimates. To do so, it combines two models: the sampling model (the direct estimator) and the linking model (the model-based estimate).
+
+### The sampling model
+
+The sampling model is nothing else but the direct estimator:
+
+$$
+\hat{\theta}_i^{\mathrm{DIR}} = \theta_i + \epsilon_i
+$$
+
+-   $\hat{\theta}_i^{\mathrm{DIR}}$: Our direct estimate of average income for district $i$..
+-   $\theta_i$: The true, but unknown, average income for district $i$.
+-   $\epsilon_i$: The sampling error, which is large for districts with small samples and small for districts with large samples (remember the plot with the confidence intervals). The variance of this error, $V_i$, is known from our survey design.
+
+### The Linking Model
+
+The linking model is the key part of the Fay-Herriot model. This is where we introduce the auxiliary data to improve our estimates. The linking model assumes that the **true average income** ($\theta_i$) for a district is not completely random but is related to other known characteristics of that district (the auxiliary variables $x_i'$). The formula below shows how the linking model works:
+
+$$\theta_i = x_i' \beta + u_i$$
+
+-   $\theta_i$: The average income for district $i$. This is the value we want to model.
+
+-   $x_i' \beta$: This is the **model-based part**. It's a linear regression that predicts the average income based on known data for each district.
+
+-   $x_i$: A vector of auxiliary variables for district $i$.
+
+-   $\beta$: A vector of regression coefficients. These are unknown parameters that the model estimates from the data. They tell us how much each auxiliary variable affects the average income across all districts. For example, if we included education as an auxiliary variable for our model, a positive $\beta$ for this variable would mean that districts with higher education tend to have higher average incomes.
+
+-   $u_i$: This is the **area-specific random effect**. This is a very important part of the model. It represents the part of the true average income ($\theta_i$) that cannot be explained by the auxiliary variables ($x_i$). This value is unique to the characteristics of each domain $i$. This value represents local factors that make the true value higher or lower than what the model predicts. The model assumes that these effects are normally distributed, with a mean of zero and a common $\sigma_u^2$. This means that, on average, we assume the auxiliary variables do a good job at predicting income, although we admit that there is always going to be some random variation from district to district.
+
+### The Error Terms: $\epsilon_i$ vs. $u_i$
+
+As we saw in the formula, the Fay-Herriot model includes an area-level random effect ($u_i$) and an error term ($\epsilon_i$) . This is known as the sampling error, and represents the error in our measurement. It is the random variability that comes from our survey sampling process. For domains with small samples, our error terms will be larger than for domains with larger samples.
+
+<!-- ### Incorporating Spatial Autocorrelation
+
+The assumption that the area-specific random effect $u_i$ is independently and randomly distributed (IID) is, in many cases, a big assumption. In reality, we know that there might be areas for which our estimates are systematically more alike than in others. This is specially relevant in the case of spatial data, where we know, from Tobler's First Law of Geography, that *things that are closer together, are more alike*. To account for this pattern, we can modify our random effects and make them depend on space. The formula of our new effects would be:
+
+$$u = \rho_1 Wu + \epsilon$$
+
+Where:
+
+-   $W$ is the adjacency matrix, which is a mathematical representation of which districts are neighbours.
+
+-   $\rho_i$ is the spatial autorregression parameter, a value between -1 and 1 that tells us how strong the spatial correlation is. If \$\\rho_1\$ is positive, it means that districts with a high random effect tend to be next to other districts with high random effects, and the opposite occurs if it is close to -1. If \$\\rho_1\$ is close to 0, it means there is no spatial correlation.
+
+-   $\epsilon$ is the new error term. It is assumed to be independent and identically distributed, and it is now part of the new $u$ equation.
+
+In summary, the linking model provides a way to estimate the true average income for each district by combining a regression model with auxiliary variables and a unique, random effect. We can acknowledge the spatial correlation between neighboring districts, which often provides a more accurate and robust estimate. -->
+
+## The Intercept-Only Model
+
+The first version of the Fay-Herriot model we will implement is the intercept-only model. The intercept-only model is a special case of the Fay-Herriot model where there are no auxiliary variables other than the constant term (the intercept). This means that the linking model is simplified to:
+
+$$
+\theta_i = \beta_0 + u_i
+$$
+
+- where $\beta_0$ is the overall average mean across all areas. 
+
+The model assumes that we do not have any specific data to predict the districts' estimates other than the already calculated direct estimates. Therefore, the estimated income is a combination of the average income across all districts and the direct estimates from the survey. The weight of each component will be determined by the variance of the direct estimates. In the extreme cases where we do not have a direct estimate for our district, the full value is the average income across all districtrs.
+
+## Applying the area-level model to our data
+
+We will calculate the intercept-only model for our Austrian exmaple. The estimates from this model should improve those we obtained through the direct estimate. Most importantly, we should be able to obtain estimates for all the districts, even the out of sample ones. To do so, we will use the `fh()` function from the `emdi` package. This function allows us to estimate the Fay-Herriot model building from previously-calculated direct estimates.
+
+First, we will prepare the data for modelling by obtaining the direct estimates and their variance. We will then estimate the FH model and calculate the 95% confidence interval of our estimates.
+
+
+
+```{r, fig.height=12, message=FALSE, warning=FALSE}
+
+# Prepare the sample data (rename columns for consistency)
+smpAgg <- sae_direct %>%
+  mutate(Var_Direct = SD^2,       # variance of the direct estimate
+         Mean = Direct) %>%       # rename Direct to Mean
+  select(Domain, Mean, Var_Direct)
+
+# Prepare the population covariates (all 94 domains)
+popAgg <- eusilcA_popAgg %>%
+  select(Domain, cash, self_empl)
+
+# Combine sample and population data
+combined_data <- combine_data(
+  pop_data   = popAgg,    pop_domains = "Domain",
+  smp_data   = smpAgg,    smp_domains = "Domain"
+)
+
+# Fit the intercept-only Fay–Herriot model
+fh_int <- emdi::fh(
+  fixed         = Mean ~ 1,
+  vardir        = "Var_Direct",
+  combined_data = combined_data,
+  domains       = "Domain",
+  method        = "reml",              
+  MSE           = TRUE
+)
+
+# Extract estimates (includes OOS areas)
+results_int <- as.data.frame(emdi::estimators(fh_int, MSE = TRUE))
+
+# Plot results and 95% confidence intervals
+
+results_ci <- results_int %>%
+  mutate(
+    lower = FH - 1.96 * sqrt(FH_MSE),
+    upper = FH + 1.96 * sqrt(FH_MSE)
+  )
+
+# Add an oos column for oos districts
+results_ci <- results_ci |> 
+  mutate(
+    oos = ifelse(Domain %in% eusilcA_smp$district, "In-sample", "Out-of-sample")
+  )
+
+# Plot
+ggplot(results_ci, aes(x = reorder(Domain, FH), y = FH)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper, colour = oos), width = 0.3) +
+  geom_point(aes(color = oos)) +
+  coord_flip() +
+  labs(
+    x = "District",
+    y = "Equivalised income (Intercept-only Fay–Herriot estimate)",
+    colour = "Out of sample",
+    title = "Model-Based Estimates of Equivalised Income (95% CI)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(lineheight = 1.5))
+```
+
+
+
+The plot shows the estimated income for each of the 94 districts in Austria, with their respective confidence intervals. Since the model weights the relative importance of the district's direct estimate and the average across-districts income, those districts for which a direct estimate is not available will be assigned the global average income (districts in blue). For all the other districts, the weight of the direct estimate will be higher as its variance becomes smaller.
+
+The incorporation of auxiliary information will allow for higher variability and reliance in our estimates, specially for those areas with small or zero sample sizes.
+
+### The Fay-Herriot model with auxiliary variables
+
+In practice, we often have access to auxiliary variables that can help us improve our estimates further. These variables can be any attribute that relates to the target variable, and that is available through census or other aggregated data sources. In our example, we will use the auxiliary variables `cash` and `self_empl` to improve our Fay-Herriot estimates.
+
+To calculate the Fay-Herriot model with auxiliary variables we implement the same function as in the intercept-only model, but this time we include our auxiliary information:
+
+
+
+```{r, fig.height=12, message=FALSE, warning=FALSE}
+# Prepare the sample data (rename columns for consistency)
+smpAgg <- sae_direct %>%
+  mutate(Var_Direct = SD^2,       # variance of the direct estimate
+         Mean = Direct) %>%       # rename Direct to Mean
+  select(Domain, Mean, Var_Direct)
+
+# Prepare the population covariates (all 94 domains)
+popAgg <- eusilcA_popAgg %>%
+  select(Domain, cash, self_empl)
+
+# Combine sample and population data
+combined_data <- combine_data(
+  pop_data   = popAgg,    pop_domains = "Domain",
+  smp_data   = smpAgg,    smp_domains = "Domain"
+)
+
+# Fit the Fay–Herriot model
+fh_aux <- emdi::fh(
+  fixed         = Mean ~ cash + self_empl, # Model including the auxiliary information
+  vardir        = "Var_Direct",
+  combined_data = combined_data,
+  domains       = "Domain",
+  method        = "reml",              
+  MSE           = TRUE,
+  interval      = c(1e-12, 1e6)              # widen variance search space
+)
+
+# Extract estimates (includes OOS areas)
+results_fh_aux <- as.data.frame(emdi::estimators(fh_aux, MSE = TRUE))
+
+# Add an oos column for oos districts
+results_fh_aux <- results_fh_aux |> 
+  mutate(
+    oos = ifelse(Domain %in% eusilcA_smp$district, "In-sample", "Out-of-sample")
+  )
+
+# Plot results and 95% confidence intervals
+results_ci <- results_fh_aux %>%
+  mutate(
+    lower = FH - 1.96 * sqrt(FH_MSE),
+    upper = FH + 1.96 * sqrt(FH_MSE)
+  )
+
+# Plot
+ggplot(results_ci, aes(x = reorder(Domain, FH), y = FH)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper, colour = oos), width = 0.3) +
+  geom_point(aes(color = oos)) +
+  coord_flip() +
+  labs(
+    x = "District",
+    y = "Equivalised income (Fay–Herriot estimate)",
+    title = "Model-Based Estimates of Equivalised Income (95% CI)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(lineheight = 1.5))
+
+```
+
+
+
+The plot shows the estimated income for each district, incorporating the auxiliary information on `cash` and `self_empl`. These new estimates are more precise than the intercept-only model --and even more so than the direct estimator-- as we see from the confidence intervals. Even the estimates for the out-of-sample districts are now more precise, since the model uses the auxiliary variables to "borrow strength" from the other districts. This is a key advantage of the model-based approach over the direct estimator and the intercept-only model.
+
+To visualise the spatial distribution of the estimates, we can plot them in a map:
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Add spatial data to estimates
+results_ci_shape <- shape_austria_dis |> 
+  left_join(results_ci, by = c("PB" = "Domain"))
+
+# Plot
+p <- ggplot() +
+  geom_sf(data = results_ci_shape, aes(fill = FH), col = "gray", lwd = 0.1) +
+  scale_fill_viridis_c() +
+  theme_minimal() +
+    labs(
+      title = "Fay-Herriot Estimates of Equivalised Income by District",
+      fill = "FH Estimate"
+    ) +
+  geom_sf(
+    data = results_ci_shape,
+    aes(text = paste0(
+      "District: ", PB,
+      "<br>FH estimate: ", FH
+    )),
+    alpha = 0
+  )
+
+ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
+```
+
+
+
+This time we observe how estimates have been calculated for all areas in Austria. The Fay-Herriot model has used the auxiliary information to complement the existing direct estimates --for in-sample domains-- and used a combination of the average income across domains and auxiliary data to make an *informed guess* about the income levels of out-of-sample domains. Overall, these estimates improve those produced by the direct estimator and the intercept-only model.
+
+## Unit-level models -- The Battese-Harter-Fuller model
+
+The final model-based method for small area estimation we will explore in this practical is the unit-level model. Unit-level models use individual survey values as the independent variable, as opposed to the area-level model which used the direct estimates. 
+
+The unit-level model can be interpreted as a bottom-up approach to producing small area estimates. Since these models employ individual-level data, the estimates can be aggregated at any desired spatial level, which provides a great advantage with respect to area-level models where estimates could only be aggregated at the same level as the available auxiliary data.
+
+Mathematically, the unit-level model can be estimated using the Battese-Harter-Fuller model:
+
+$$
+\theta_{id} = \mathbf{x}_{id}^\top \beta + u_d + \epsilon_{id}
+$$
+
+- $\theta_{id}$ is the estimate at unit-level.
+- $\mathbf{x}_{id}^\top$ is the auxiliary information at unit-level.
+- $\beta$ is the vector of coefficients that the model estimates.
+- $u_d$ is the area-level error.
+- $\epsilon_{id}$ is the unit-level error.
+
+The main problem of unit-level approaches is the data availability. It assumes access of unit-specific auxiliary data ($\mathbf{x}_id$) for each element of the survey $i$ and domain $d$. Access to this information can be challenging, specially due to data confidenciality issues. However, a common approach for overcoming this issue is the use of synthetic population data as a mirror of the full population.
+
+In this practical, we will use the `ebp` function from the `emdi` package to compute the unit-level estimator. We will use the population data provided in the EU-SILC data for Austria as our unit-level auxiliary information, and the variables `cash` and `self_empl` as auxiliary variables as we did in the area-level model.
+
+
+
+```{r, message=FALSE, warning=FALSE}
+# Estimate unit-level model
+bhf_aux <- ebp(
+  fixed        = eqIncome ~  cash + self_empl, # model formula
+  pop_data     = eusilcA_pop,    # population frame
+  pop_domains  = "district",       # domain variable in population data
+  smp_data     = eusilcA_smp,    # sample microdata
+  smp_domains  = "district",       # domain variable in sample data
+  L            = 100,            # number of Monte Carlo simulations
+  MSE          = TRUE,           # request MSEs
+  B            = 50,             # bootstrap reps for MSE
+  transformation = "box.cox",    # transformation for skewed income data
+  cpus         = 2               # parallel cores (optional)
+)
+```
+
+
+
+To visualise the results of our model we will plot the estimates and confidence intervals as we did with our previous examples:
+
+
+
+```{r, fig.height=12, echo=TRUE, warning=FALSE, message=FALSE}
+# Format results into a data frame
+results_bhf_aux <- as.data.frame(emdi::estimators(bhf_aux, MSE=TRUE)) # domain estimates + MSE
+
+# Calculate confidence interval (95%)
+ebp_ci <- results_bhf_aux %>%
+  mutate(
+    lower = Mean - 1.96 * sqrt(Mean_MSE),
+    upper = Mean + 1.96 * sqrt(Mean_MSE)
+  )
+
+# Add an oos column for oos districts
+ebp_ci <- ebp_ci |> 
+  mutate(
+    oos = ifelse(Domain %in% eusilcA_smp$district, "In-sample", "Out-of-sample")
+  )
+
+# Plot results
+p <- ggplot(ebp_ci, aes(x = reorder(Domain, Mean), y = Mean)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper, colour = oos), width = 0.3) +
+  geom_point(color = "#264653", size = 2) +
+  coord_flip() +
+  labs(
+    x = "District",
+    y = "Equivalised income (EBP estimate)",
+    title = "Unit-level EBP Estimates with 95% Confidence Intervals"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(axis.text.y = element_text(lineheight = 1.5))
+p
+```
+
+
+
+In this case we observe how the confidence intervals for the unit-level model are wider than those for the area-level model. This difference can be attributed to the fact that the uncertainty in the case of the unit-level model comes from two sources: the domain-level uncertainty, and the individual-level uncertainty. This makes our confidence intervals wider. Additionally, out-of-sample domains systematically present wider confidence intervals than within-sample domains. This is expected, and can be attributed to the lack of individual-level data for the out-of-sample domains.
+
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Add spatial data
+shape_district_results <- shape_austria_dis %>%
+  left_join(ebp_ci, by = c("PB" = "Domain"))
+
+p <- ggplot() +
+  geom_sf(
+    data = shape_district_results,
+    aes(fill = Mean, text = paste("District:", PB, "<br>Mean Income:", round(Mean, 2))),
+    col = "gray",
+    lwd = 0.1
+  ) +
+  scale_fill_viridis_c(option = "D", direction = 1) +
+  labs(
+    title = "Unit-level EBP Estimates of Equivalised Income",
+    fill = "Mean Income"
+  ) +
+  theme_void() +
+  theme(legend.position = "bottom")  +
+  geom_sf(
+    data = shape_district_results,
+    aes(text = paste0(
+      "District: ", PB,
+      "<br>FH estimate: ", Mean
+    )),
+    alpha = 0
+  )
+
+ggplotly(p, tooltip = "text") %>% layout(hovermode = "closest")
+```
+
+
+
+Again, we observe how the model has produced estimates for all our domains. In this case, the unit-level model has taken a bottom-up approach where individual estimates have been aggregated at our desired domain level. 
+
+# Ground truth comparison
+
+As a final step, and a summary of our practical, we are going to compare the results of our estimators with the groundtruth data. In real life we do not have access to this information --otherwise we would not need small area estimation methods!-- but we can use the *groundtruth* data attached to our Austrian sample to check how our different models performed.
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Join groundtruth with estimates
+
+truth_df <- eusilcA_pop |> 
+  group_by(district) |>
+  summarise(
+    mean_income = mean(eqIncome, na.rm = TRUE)
+  ) |> 
+  rename(
+    Domain = district,
+    Truth = mean_income
+  )
+
+# Standardise method-specific frames
+direct_df <- results_fh_aux %>%
+  select(Domain, Estimate = Direct, MSE = FH_MSE) %>%
+  mutate(Method = "Direct")
+
+fh_aux_df <- results_fh_aux %>%
+  select(Domain, Estimate = FH, MSE = FH_MSE) %>%
+  mutate(Method = "FH + auxiliaries")
+
+fh_int_df <- results_int %>%
+  select(Domain, Estimate = FH, MSE = FH_MSE) %>%
+  mutate(Method = "FH intercept-only")
+
+bhf_df <- results_bhf_aux %>%
+  select(Domain, Estimate = Mean, MSE = Mean_MSE) %>%
+  mutate(Method = "Unit-level (BHF)")
+
+compare_df <- bind_rows(direct_df, fh_int_df, fh_aux_df, bhf_df) %>%
+  left_join(truth_df, by = "Domain")
+
+
+# Evaluate the performance for each domain
+compare_eval <- compare_df %>%
+  mutate(
+    Error   = Estimate - Truth,
+    AbsErr  = abs(Error),
+    SqErr   = Error^2,
+    SE      = sqrt(MSE),
+    lower   = Estimate - 1.96*SE,
+    upper   = Estimate + 1.96*SE,
+    Covered = ifelse(!is.na(Truth) & !is.na(lower) & Truth >= lower & Truth <= upper, 1L, NA_integer_)
+  )
+
+# Summarise the comparison
+summary_metrics <- compare_eval %>%
+  group_by(Method) %>%
+  summarise(
+    n              = sum(!is.na(Estimate) & !is.na(Truth)),
+    Bias           = mean(Error, na.rm = TRUE),
+    MAE            = mean(AbsErr, na.rm = TRUE),
+    RMSE           = sqrt(mean(SqErr, na.rm = TRUE)),
+    Coverage_95    = mean(Covered, na.rm = TRUE),
+    Mean_CI_Width  = mean(upper - lower, na.rm = TRUE),
+    Corr_Pearson   = cor(Estimate, Truth, use = "complete.obs"),
+    Corr_Spearman  = cor(Estimate, Truth, method = "spearman", use = "complete.obs"),
+    RelBias_total  = {
+      idx <- !is.na(Estimate) & !is.na(Truth)
+      (sum(Estimate[idx]) - sum(Truth[idx])) / sum(Truth[idx])
+    }
+  ) %>%
+  arrange(RMSE)
+
+# Summarise outputs
+summary_metrics
+```
+
+
+
+The table shows a series of metrics that report the performance of the different methods when compared to the groundtruth. We see that the direct estimator performs quite well in our example (high correlation) but only includes 70 out of the 94 observations. The Fay-Herriot model with auxiliary data also provides high correlation and incorporates the 24 out-of-sample districts. The worst-performing model was the intercept-only area-level model.
+
+We can also visualise these results through their corresponding correlation plots:
+
+
+
+```{r, echo=FALSE}
+plot_df <- compare_eval %>% filter(!is.na(Truth), !is.na(Estimate))
+
+ggplot(plot_df, aes(x = Truth, y = Estimate)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_point(alpha = 0.7) +
+  facet_wrap(~ Method, scales = "free") +   # free scales OK now
+  labs(x = "True value", y = "Estimator", title = "Estimator vs Truth") +
+  theme_minimal()
+```
+
+
+
+# Practical summary and key take-aways
+
+Small area estimation is a methodology that allows us to make the most out of limited sample sizes. In this practical, we have explored how to apply SAE techniques to real-life data using a sample data set. Starting from the simplest method --the Horvitz-Thompson direct estimator-- we calculated the district-level equivalised household income in Austria, building on individual survey data. The problem we try to solve in small area estimation is calculating reliable estimates of our target variable based on limited sample sizes. In our exmaple, 24 out of the 94 districts in our data.
+
+
+This practical has provided a real-life application of small area estimation methods on a sample data set. We started by calculating the direct estimator and exploring the relevance of survey weights in generating this type of estimator. Despite its easy-to-apply nature, the direct estimator has an important limitation: it only produces estimates for sampled domains. Additionally, it is very sensitive to small samples, making the estimates unreliable. In our example, 24 out of 94 domains were out of sample, which means that an important proportion of areas are being left out. 
+
+To solve this problem, we turned to model-based estimators. Model-based methods allow for incorporating auxiliary information from census or other aggregated data sources in order to *borrow strength* and produce more reliable estimates. In a first, simplified version of the Fay-Herriot area-level model, we estimated an intercept-only model where income was estimated using information from the direct estimator and incorporating area-level random effects. The results of this model did not perforfm better than those of the direct estimator, although they allowed us to produce estimates for out-of-sample domains based on the aggregate average of the country's income.
+
+Incorporating area-level auxiliary data to the model increased its performance. The additional information obtained through two area-level covariates allowed us to produce *better-informed guesses* of our target variable.
+
+The final model estimated in the practical was the unit-level model. In this case, individual-level auxiliary information is required to produce aggregated estimates, allowing for more flexibility at the time of choosing the spatial resolution of our final estimates. The model, however, presented higher levels of uncertainty than the area-level one, since both individuals and domains now become sources of variation. Out-of-sample domains showed higher uncertainty than in-sample domains.
+
+Overall, this practical has provided an overview of the methods, and a basic demonstration of code to apply small area estimation methods to other applications.
