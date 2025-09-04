@@ -1,0 +1,443 @@
+[
+  {
+    "objectID": "workshop/slides/slides.html#about-us",
+    "href": "workshop/slides/slides.html#about-us",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "About us",
+    "text": "About us"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#about-track-uk",
+    "href": "workshop/slides/slides.html#about-track-uk",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "About TRACK-UK",
+    "text": "About TRACK-UK\n\n\nThis workshop is part of a wider project we are working at at UCL, together with Arup and the Alan Turing Institute.\nThe project is called TRACK-UK, and funded by the ESRC.\nThe project was inspired by the fact that we usually have limited understanding of what happens at small area level in terms of mobility, travel emissions, energy use, or housing quality.\nThere is a wide range of existing surveys (NTS, English Housing Survey), but they are usually designed to be used at regional or national scale. It is not easy to use this data to produce neighbourhood or small area estimates (OA, MSOA, LSOA).\nAs part of the project, we have had to learn about these methods, so we take this workshop as an opportunity to share what we have learnt with others!"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#about-this-workshop",
+    "href": "workshop/slides/slides.html#about-this-workshop",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "About this workshop",
+    "text": "About this workshop\n\nThe workshop is structured in two parts:\n\nTheoretical presentation: We will learn about small area estimation methods from a theoretical perspective, providing an intuitive overview on these methods (9:00 - 9:45)\nPractical: Hands-on session in R where we will see how to apply all these concepts to real data (10:00 - 10:45)"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#expected-takeaways",
+    "href": "workshop/slides/slides.html#expected-takeaways",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Expected takeaways",
+    "text": "Expected takeaways\n\n\nUnderstand what Small Area Estimation is and why it can be useful in the context of Urban Analytics.\nGet familiar with the main types of SAE methods – direct estimators, area-level models, unit-level models, and how they differ in terms of data and complexity.\nLearn how model-based methods can help us improve our estimates by incorporating auxiliary information.\nGain hands-on experience in R applying these methods to real data."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#sae-in-the-wild",
+    "href": "workshop/slides/slides.html#sae-in-the-wild",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "SAE in the wild",
+    "text": "SAE in the wild\n\nSource: World Bank."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#sae-in-the-wild-1",
+    "href": "workshop/slides/slides.html#sae-in-the-wild-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "SAE in the wild",
+    "text": "SAE in the wild\n\nSource: Bennett, J. E., Rashid, T., Zolfaghari, A., Doyle, Y., Suel, E., Pearson-Stuttard, J., & Ezzati, M. (2023). Changes in life expectancy and house prices in London from 2002 to 2019. The Lancet Regional Health–Europe, 27.\n\nIn other fields, like epidemiology or health, we see maps like this, where metrics are provided at very high spatial resolution level.\nThese maps are part of a paper that evaluated the link between housing prices and life expectancy in London between 2002 and 2019 for all London’s LSOAs.\nSuch granular outputs allow for more nuanced understanding of inequalities."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#clearing-up-the-confusion",
+    "href": "workshop/slides/slides.html#clearing-up-the-confusion",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Clearing up the confusion",
+    "text": "Clearing up the confusion\n\n\n  \n    \n      Dasymetric population\n      \n           Dasymetric mapping is used to disaggregate coarse resolution population estimates (e.g. census) to produce a finer resolution estimate of a population.\n      \n    \n\n    \n      Synthetic Population\n      \n        Synthetic populations use statistical processes to simulate individual-level data that match known population totals and distributions from sources like census.\n      \n    \n  \n\n  \n    \n      Small Area Estimation\n      \n        Small Area Estimation is a a statistical methodology that uses models to produce reliable estimates for areas where survey samples are too small or even zero."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#small-area-estimation-overview-1",
+    "href": "workshop/slides/slides.html#small-area-estimation-overview-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Small Area Estimation Overview",
+    "text": "Small Area Estimation Overview\n\nSmall Area Estimation (SAE) is a statistical methodology that allows us to improve the precision of our estimates when we work with survey data for which sample sizes are limited or even zero.\n\n\n\nThe reason we sometimes we don’t have data is because these surveys are designed to aggregate the data at national or regional levle, but not for small areas (like neighbourhoods).\nIn urban Analitics we are very interested in this more granular estimates, rather than national or regional estimates."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#small-area-estimation-overview-2",
+    "href": "workshop/slides/slides.html#small-area-estimation-overview-2",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Small Area Estimation Overview",
+    "text": "Small Area Estimation Overview\n\nWhy are sample sizes too small?\n\nSurveys are designed for specific levels of aggregation.\nFor instance, the NTS is designed for national-level and regional-level aggregation.\nIf we want to aggregate at a higher spatial resolution, sample sizes might be too small or even zero."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#small-area-estimation-overview-3",
+    "href": "workshop/slides/slides.html#small-area-estimation-overview-3",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Small Area Estimation Overview",
+    "text": "Small Area Estimation Overview\n\n\n\nSurvey data is usually designed to be used at certain aggregation levels.\nTherefore, the way samples are collected are meant to support the level of aggregation in the survey design."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#small-area-estimation-overview-4",
+    "href": "workshop/slides/slides.html#small-area-estimation-overview-4",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Small Area Estimation Overview",
+    "text": "Small Area Estimation Overview\n\n\n\nThis can be problematic when we want to aggregate the data at a level that is lower than the survey recommended aggregation level.\nFor instance, the NTS is not designed to produce robust data below regional level.\nIf we want to aggregate at a higher spatial resolution than recommended, we might end up with areas or domains for which sampled observations are very small or even zero."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#small-area-estimation-overview-5",
+    "href": "workshop/slides/slides.html#small-area-estimation-overview-5",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Small Area Estimation Overview",
+    "text": "Small Area Estimation Overview\n\n\n\nIn the example we will work with during the practical, we will use a dummy survey data sample for which some areas have no observations.\nWe will see how this can be problematic when using certain small area estimation methods."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#small-area-estimation-overview-6",
+    "href": "workshop/slides/slides.html#small-area-estimation-overview-6",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Small Area Estimation Overview",
+    "text": "Small Area Estimation Overview\n\nSAE methods help us solve this issue by using models that include additional information (auxiliary data) in the form of covariates. This models better explain the variation in our data, and produce more reliable estimates."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#sae-methods-overview",
+    "href": "workshop/slides/slides.html#sae-methods-overview",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "SAE methods overview",
+    "text": "SAE methods overview\n\n\nToday we will talk about the three main small area estimation methodologies: direct estimators, area-level models, and unit-level models.\nWe can think of them as increasingly complex methods that will help us improving our estimates.\nAs complexity increases, our estimates become more accurate. However, this also means that the data and computational requirements of the models also increase."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#sae-methods-overview-1",
+    "href": "workshop/slides/slides.html#sae-methods-overview-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "SAE methods overview",
+    "text": "SAE methods overview\n\n\n\nWhen we talk about precision we talk about the reliability or stability of an estimate for a small area. It reflects how much uncertainty we or variability is associated with that estimate.\nYou can think of it as a confidence interval – as your model’s precision improves, your confidence interval narrows."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#sae-methods-overview-2",
+    "href": "workshop/slides/slides.html#sae-methods-overview-2",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "SAE methods overview",
+    "text": "SAE methods overview\n\n\n\nThe methods we will learn about today are part of a wider family of SAE methods. However, we will focus on these three for the sake of time."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#our-example",
+    "href": "workshop/slides/slides.html#our-example",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Our example",
+    "text": "Our example\n\n\nExample: Estimating income for Austrian districts.\nWe are interested in calculating the income levels of the 94 Austrian districts using SAE methods.\nWe have a survey with individual records at District level.\nFor some areas we have very limited observations and for others we have no observations at all."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#our-example-1",
+    "href": "workshop/slides/slides.html#our-example-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Our example",
+    "text": "Our example"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#direct-estimation-methods-1",
+    "href": "workshop/slides/slides.html#direct-estimation-methods-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Direct estimation methods",
+    "text": "Direct estimation methods\n\n\nThis is the simplest approach to small area estimation.\nIntuitively, the direct estimator calculates the mean of the survey variable of interest for each area.\nExample: We take the individual incomes and calculate the average for each district."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#direct-estimation-methods-2",
+    "href": "workshop/slides/slides.html#direct-estimation-methods-2",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Direct estimation methods",
+    "text": "Direct estimation methods\n\nIn SAE, this mathematical formulation is known as the Horvitz-Thompson estimator.\n\n\n\\[\n\\hat{\\bar{Y}_d} = \\frac{1}{N_d} \\sum_{i \\in s_d} {w_{di}} Y_{di}\n\\]\nwhere \\(\\hat{\\bar{Y}_d}\\) is our estimate for area \\(d\\); \\(N_d\\) is the total population of domain \\(d\\), \\(Y_{di}\\) is the observed value for individual \\(i\\) in domain \\(d\\); and \\(w_{di}\\) is the sampling weight of observation \\(i\\) in domain \\(d\\)."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#a-quick-note-on-survey-sampling",
+    "href": "workshop/slides/slides.html#a-quick-note-on-survey-sampling",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "A quick note on survey sampling",
+    "text": "A quick note on survey sampling\n\n\nWhen a survey is run, the survey design ensures that it is as representative as possible of the full population –i.e. all groups in the population are included in the survey, in a proportion that follows that of the total population.\nThere is usually documentation accompanying the survey data explaining the details on how the survey sampling was done.\nAs a result, survey data often comes with sampling weights, which represent the probability of each observation included in the sample.\nAdditionally, the survey can contain more sophisticated attributes, that account for different subgroups within the population –this is known as stratification– or account for sampling with or without replacement."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#a-quick-note-on-survey-sampling-1",
+    "href": "workshop/slides/slides.html#a-quick-note-on-survey-sampling-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "A quick note on survey sampling",
+    "text": "A quick note on survey sampling"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#direct-estimation-methods-3",
+    "href": "workshop/slides/slides.html#direct-estimation-methods-3",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Direct estimation methods",
+    "text": "Direct estimation methods\n\nWhat happens if we have zero sample sizes? The direct estimator is a fancy mean. Therefore, if there are no observations for an area, we cannot estimate the value of our target variable."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#direct-estimation-methods-4",
+    "href": "workshop/slides/slides.html#direct-estimation-methods-4",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Direct estimation methods",
+    "text": "Direct estimation methods\n\n\nAdditionally, for areas with small sample sizes, our estimates might be unreliable.\nWhat does that mean?\n\nExample: You want to estimate the mean income of a region, and you randomly sample 2 individuals to draw your estimates (very small sample!). Turns out that those two individuals are the richest ones in the area – You might think that the area is very wealthy, but you just sampled the outliers! Your estimates will be biased.\n\nHow do you solve this problem? You can use more sophisticated methods (model-based SAE methods) which incorporate additional information allowing you to make better informed guesses about your target variable."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#direct-methods-advantages-and-limitations",
+    "href": "workshop/slides/slides.html#direct-methods-advantages-and-limitations",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Direct methods: Advantages and limitations",
+    "text": "Direct methods: Advantages and limitations\n\nAdvantages\n\nThe direct estimation method works well when the sample has good coverage across all areas you are interested in.\nIt does not rely on external data, as it only uses observed data from the survey.\nIt is intuitive, and easy to interpret.\n\nLimitations\n\nUnreliable for areas where you have small samples – estimates can be very “noisy” (it is not very precise).\nNot available for an area of interest for which we have no respondents."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#model-based-estimation-methods-1",
+    "href": "workshop/slides/slides.html#model-based-estimation-methods-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Model-based estimation methods",
+    "text": "Model-based estimation methods\n\n\nDirect methods are only reliable under large enough samples. However, this is not usually the case when we work with real survey data and small areas.\nFurthermore, we usually have access to additional sources of information, not just survey data –e.g. census data, administrative data– which can tell us more about the target variable.\nWe can therefore take advantage of this extra information and improve our estimates by “borrowing strength” from these other sources.\nModel-based methods allow us to incorporate auxiliary information to improve our estimates."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#model-based-estimation-methods-2",
+    "href": "workshop/slides/slides.html#model-based-estimation-methods-2",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Model-based estimation methods",
+    "text": "Model-based estimation methods\n\n\nImagine you have information about number of vehicles per household at district level, and you want to estimate the district’s income levels.\nNumber of vehicles per household is a good indicator of income levels.\nModel-based methods allow you to incorporate this auxiliary information to your estimator in order to improve your predictions on income levels."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#model-based-estimation-methods-3",
+    "href": "workshop/slides/slides.html#model-based-estimation-methods-3",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Model-based estimation methods",
+    "text": "Model-based estimation methods\n\n\nThe type of data we incorporate into our analysis will determine the type of model-based estimation method we will use.\nModel-based methods are divided into area-level models, and unit-level models:\n\nArea-level models use aggregated auxiliary data at domain level (e.g. average house prices, age distribution)\nUnit-level models also include individual (unit)-level data from surveys (e.g. paid rent, individual age)."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-1",
+    "href": "workshop/slides/slides.html#area-level-models-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models",
+    "text": "Area-level models\n\n\nArea-level models only use covariates at domain level.\nFormally, we estimate them using the Fay-Herriot model.\nThe Fay-Herriot model uses a two-step approach where we first calculate the direct estimator, and then model the outcomes using the auxiliary information."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-2",
+    "href": "workshop/slides/slides.html#area-level-models-2",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models",
+    "text": "Area-level models\n\n\nFirst, the sampling model models the direct estimator.\n\\[\n\\hat{\\theta}_d^{DIR} = \\theta_d + \\epsilon_d\n\\]\n\nwhere \\(\\hat{\\theta}_d^{DIR}\\) is the direct estimate for area \\(d\\),formed by the true value \\(\\theta_d\\) plus the sampling error \\(\\epsilon_d\\), which reflects the sampling error.\n\n\nThe sampling model establishes the relationship between the what we observe in the survey and the true values of the estimator.\nWhat it says, intuitively, is that each direct estimate is the true value plus some noise produced by using a sample, instead of the full population.\nThe level of noise depends on the sample size: smaller samples lead to more noise."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-3",
+    "href": "workshop/slides/slides.html#area-level-models-3",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models",
+    "text": "Area-level models\n\n\nNext, the linking model links the true mean with the auxiliary information. This is the bit that lets us borrow strength from additional information.\n\\[\n  \\theta_d = \\mathbf{x}_d^T \\boldsymbol{\\beta} + u_d, \\quad u_d \\sim_{\\text{ind}} N(0, \\sigma_u^2), \\quad d = 1, \\ldots, M\n  \\]\nwhere \\(\\theta_i\\) is the true value of the parameter; \\(\\mathbf{x}_d^T\\) are the covariates for area \\(d\\), with their respective \\(\\beta\\) coefficients (the fixed effects), and \\(u_d\\) is the area-level random effect, capturing the unexplained differences between areas.\nWhat this part of the model says, intuitively, is that the true area value is not just random noise, it can be predicted through known area-level data (\\(\\mathbf{x}_d^T\\)).\nBut we always introduce some errors because of everything we cannot measure (\\(u_d\\)).\nTogether (\\(\\mathbf{x}_d^T \\boldsymbol{\\beta} + u_d\\)) we get a better-informed guess of the true value of our estimator."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-4",
+    "href": "workshop/slides/slides.html#area-level-models-4",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models",
+    "text": "Area-level models\n\nTogether, we obtain the following equation:\n\\[\n   \\hat{\\theta}_d^{DIR} = \\theta_d + \\mathbf{x}_d^T \\boldsymbol{\\beta} + u_d + \\epsilon_d, \\quad u_d \\sim_{\\text{ind}} N(0, \\sigma_u^2), \\quad d = 1, \\ldots, M\n  \\]"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#spatial-area-level-models",
+    "href": "workshop/slides/slides.html#spatial-area-level-models",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Spatial area-level models",
+    "text": "Spatial area-level models\n\n\nThe basic Fay-Herriot model assumes that the area-level effects (\\(u_d\\)) are independent and identically distributed.\nWhat this means is that what happens in one area is unrelated to what is happening in other areas. In our example, this would mean that the income in one places is not related to income anywhere else.\nIn reality, we know that this is usually not true: neighbouring areas tend to look alike (Tobler’s First Law of Geography).\nWe can therefore include space in our models by adding a spatial effect. This will ensure that our model understands that areas that are closer will have estimates that are more similar than those of areas further away.\n\n\n\\[\nu = \\rho_1 Wu + \\epsilon\n\\]\nwhere \\(W\\) is the adjacency matrix which tells us which districts are neighbours; \\(\\rho_1\\) is the spatial autorregression parameter, a single value between -1 and 1 that tells us how strong the relationship between neighbours is; \\(u_d\\) is the area of interest; and \\(\\epsilon\\) is the error term."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-the-intercept-only-model",
+    "href": "workshop/slides/slides.html#area-level-models-the-intercept-only-model",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models – The intercept-only model",
+    "text": "Area-level models – The intercept-only model\n\n\nWhat happens if we do not have access to area-level auxiliary information?\nDo not worry! We can still use area-level modelling.\nIn this case, we will use the intercept-only model, which allows us to generate estimates based on a combination of the direct estimates for each domain, and the global average.\nThe weight of each component will depend on the variance of the sampling error:\n\nFor areas with large samples, the direct estimator will have more weight than the global average.\nFor areas with small samples, the global average will have more weight.\nFor out-of-sample areas, the global mean will be assigned as the best guess"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-the-intercept-only-model-1",
+    "href": "workshop/slides/slides.html#area-level-models-the-intercept-only-model-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models – The intercept-only model",
+    "text": "Area-level models – The intercept-only model\n\nIn this case, the equation of the intercept-only model is:\n\n\\[\n    \\theta_d = \\beta_0 + u_d, \\quad u_d \\sim_{\\text{ind}} N(0, \\sigma_u^2), \\quad d = 1, \\ldots, M\n\\]\nwhere \\(\\beta_0\\) is the global average, and \\(u_d\\) represents the area-level random effects."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-vs-direct-estimator",
+    "href": "workshop/slides/slides.html#area-level-vs-direct-estimator",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level vs Direct estimator",
+    "text": "Area-level vs Direct estimator\n\n\nThe area-level model can calculate estimates for out-of-sample domains, although their accuracy will depend on how good the model is at explaining uncertainty through the auxiliary variables.\nIn general, when comparing the estimates of the direct estimator and area-level model, we observe how the uncertainty around our estimates decreases with the latter method.\nWe will further explore this in the practical."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-vs-direct-estimator-1",
+    "href": "workshop/slides/slides.html#area-level-vs-direct-estimator-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level vs Direct estimator",
+    "text": "Area-level vs Direct estimator"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-vs-direct-estimator-2",
+    "href": "workshop/slides/slides.html#area-level-vs-direct-estimator-2",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level vs Direct estimator",
+    "text": "Area-level vs Direct estimator"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-advantages-and-limitations",
+    "href": "workshop/slides/slides.html#area-level-models-advantages-and-limitations",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models: Advantages and limitations",
+    "text": "Area-level models: Advantages and limitations\n\nAdvantages\n\nThe main advantage of using an area-level model is that we increase the precision of our estimates by adding auxiliary information at area level.\nAdditionally, this allows us to obtain predictions for out-of-sample domains, even when no auxiliary information is available.\n\nLimitations\n\nThese models require access to area-level data, and are not as straightforward to interpret as direct methods."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#unit-level-models-1",
+    "href": "workshop/slides/slides.html#unit-level-models-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Unit-level models",
+    "text": "Unit-level models\n\n\nUnit-level models are the most complex type of SAE method we will talk about today.\nUnit-level models uses individual responses from survey combined with covariates available for the whole population, available through synthetic populations or census microdata.\nIn general, they allow for producing more precise estimates than direct estimators and area-level models.\nSimilarly to area-level models, unit-level models also produce estimates for out-of-sample domains (assuming we have access to unit-level auxiliary data)."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#unit-level-models-2",
+    "href": "workshop/slides/slides.html#unit-level-models-2",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Unit-level models",
+    "text": "Unit-level models\n\nThe most basic unit-level models are known as nested error or Battese, Harter, and Fuller models.\nThese type of models are called nested because they include both area-level and unit-level random effects:\n\n\n\\[\n  y_{di} = \\mathbf{x}_{di}^T \\beta + u_d + \\epsilon_{di} , \\quad u_d \\sim_{\\text{ind}} N(0, \\sigma_u^2), \\quad \\epsilon_{di} \\sim_{\\text{ind}} N(0, \\sigma_\\epsilon^2)\n\\]\n\nwhere \\(y_{di}\\) is the unit-level outcome for individual \\(i\\) in area \\(d\\),\n\n\\(\\mathbf{x}_{di}^T \\beta\\) represents the individual-level covariates and their coefficients,\n\n\\(u_d\\) is the area-level random effect, and\n\n\\(\\epsilon_{di}\\) is the unit-level error term, capturing individual variability within each area.\nThis data is then aggregated at any desired spatial resolution."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#unit-level-models-3",
+    "href": "workshop/slides/slides.html#unit-level-models-3",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Unit-level models",
+    "text": "Unit-level models\n\n\nThe model is estimated over the survey data, with observed values of \\(y_{di}\\) and \\(x_{di}\\).\nIt is then applied to the full population, using the microdata or synthetic data available, and used to predict the values of \\(y_{di}\\) for every element of the population.\nThe individual-level values are then aggregated at the desired spatial level."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#unit-level-models-4",
+    "href": "workshop/slides/slides.html#unit-level-models-4",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Unit-level models",
+    "text": "Unit-level models\n\n\nThe area-level random effect accounts for those attributes of the domain that cannot be explained by the area-level auxiliary variables we include in the model, and contribute to variations in the target variable.\n\nE.g. Vienna being the capital, and this leading to higher average income levels.\n\nSimilarly, the unit-level random effects account for individual-level characteristics that cannot be explained by the unit-level covariates included in the model.\n\nE.g. A person being the CEO at a bank and earning a very high salary (assuming we do not include occupation as a covariate)."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#unit-level-models-advantages-and-limitations",
+    "href": "workshop/slides/slides.html#unit-level-models-advantages-and-limitations",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Unit-level models: Advantages and limitations",
+    "text": "Unit-level models: Advantages and limitations\n\nAdvantages\n\nUnit-level models are the most precise out of the SAE methods we have learnt about today, assuming data is available.\nUnit-level models constitue a “bottom-up” approach to SAE –they use the most granular available data (unit-level).\nThey are very flexible, since they allow for aggregation at any desired geographical level.\n\nLimitations\n\nThey require access to population-level auxiliary data at individual level, which may not always be available.\nEstimation is more complex and computationally demanding than area-level models, especially when working with large populations."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#summary-and-key-takeaways-1",
+    "href": "workshop/slides/slides.html#summary-and-key-takeaways-1",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Summary and key takeaways",
+    "text": "Summary and key takeaways\n\n\nSmall Area Estimation helps us produce reliable estimates in areas where survey data is sparse or missing.\nWe explored three SAE approaches:\n\nDirect estimators: straightforward, but unreliable for small samples.\nArea-level models: use domain-level covariates to improve estimates.\nUnit-level models: use individual-level data for even more precision.\n\nModel-based methods “borrow strenght” from auxiliary information (e.g. census data, spatial data), allowing us to reduce noise and fill data gaps.\nSpatial models can improve accuracy furhter by accounting for the spatial autocorrelation of the data."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#qr-code-for-practical",
+    "href": "workshop/slides/slides.html#qr-code-for-practical",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "QR code for practical",
+    "text": "QR code for practical"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#additional-resources",
+    "href": "workshop/slides/slides.html#additional-resources",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Additional Resources",
+    "text": "Additional Resources\n\n\n\n\nBattese, G. E., Harter, R. M., & Fuller, W. A. (1988). An error-components model for prediction of county crop areas using survey and satellite data. Journal of the American Statistical Association, 83(401), 28–36.\n\n\nFay III, R. E., & Herriot, R. A. (1979). Estimates of income for small places: An application of james-stein procedures to census data. Journal of the American Statistical Association, 74(366a), 269–277.\n\n\nHorvitz, D. G., & Thompson, D. J. (1952). A generalization of sampling without replacement from a finite universe. Journal of the American Statistical Association, 47(260), 663–685.\n\n\nKreutzmann, A.-K., Pannier, S., Rojas-Perilla, N., Schmid, T., Templ, M., & Tzavidis, N. (2019). The r package emdi for estimating and mapping regionally disaggregated indicators. Journal of Statistical Software, 91, 1–33.\n\n\nMolina, I., & Marhuenda, Y. (2015). Sae: An r package for small area estimation.\n\n\nMorales, D., Lefler, M., Pérez, A., & Hobza, T. (2021). A course on small area estimation and mixed models; statistics for social and behavioral sciences. Springer: Berlin/Heidelberg, Germany.\n\n\nParker, P. A., Janicki, R., & Holan, S. H. (2019). Unit level modeling of survey data for small area estimation under informative sampling: A comprehensive overview with extensions. arXiv Preprint arXiv:1908.10488.\n\n\nRao, J. N., & Molina, I. (2015). Small area estimation. John Wiley & Sons.\n\n\nSwanwick, R. H., Read, Q. D., Guinn, S. M., Williamson, M. A., Hondula, K. L., & Elmore, A. J. (2022). Dasymetric population mapping based on US census data and 30-m gridded estimates of impervious surface. Scientific Data, 9(1), 523."
+  },
+  {
+    "objectID": "workshop/practical/practical.html",
+    "href": "workshop/practical/practical.html",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "",
+    "text": "Please, make sure you have R version 4.5.1 (2025-06-13) installed in your laptop. You can download it from here: https://cran.r-project.org/\n# Install required packages if not already installed\nrequired_packages &lt;- c(\n  \"sae\", \"emdi\", \"saeTrafo\", \"hbsae\", \"SUMMER\", \"survey\",\n  \"dplyr\", \"tidyr\", \"purrr\", \"sf\", \n  \"ggplot2\", \"hrbrthemes\", \"GGally\", \"patchwork\", \"plotly\"\n)\n\nto_install &lt;- setdiff(required_packages, rownames(installed.packages()))\nif (length(to_install) &gt; 0) {\n  install.packages(to_install)\n}\n\n# Install INLA for Bayesian SAE estimators\nif (!isTRUE(requireNamespace(\"INLA\", quietly = TRUE))) {\n  install.packages(\"INLA\", repos=c(getOption(\"repos\"), \n                  INLA=\"https://inla.r-inla-download.org/R/stable\"), dep=TRUE)\n}\n\nlibrary(sae)          # Small area estimation models\nlibrary(emdi)         # Example datasets\nlibrary(saeTrafo)     # For domain sizes\nlibrary(SUMMER)       # Bayesian SAE\nlibrary(survey)       # Survey designs\n\nlibrary(dplyr)        # For data wrangling\nlibrary(tidyr)        # For data wrangling\nlibrary(purrr)        # For data wrangling\nlibrary(sf)           # For mapping\nlibrary(ggplot2)      # For visualisations\nlibrary(hrbrthemes)   # For visualisations\nlibrary(GGally)       # For visualisations\nlibrary(patchwork)    # For visualisations\nlibrary(viridis)      # For visualisations\nlibrary(cowplot)      # For visualisations\nlibrary(plotly)       # For interactive visualisations"
+  },
+  {
+    "objectID": "workshop/practical/practical.html#understanding-the-sampling-weights",
+    "href": "workshop/practical/practical.html#understanding-the-sampling-weights",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "3.1 Understanding the sampling weights",
+    "text": "3.1 Understanding the sampling weights\nBefore we manually calculate the direct estimator, we will have a closer look at the sampling weights (\\(w_{di}\\)). These values represent the survey weigths, and we can find them in the weights column of our sample data set eusilcA_smp. In our survey, the weights are calculated as the inverse probabilities of selection or, in other words, the inverse of the likelyhood of an individual of the population being sampled. The value indicates the number of survey respondents in the population. This information can usually be found in the documentation of the survey, together with any clusters or strata that might have been defined by the surveyors.\nThese design weights can be calculated following this formula:\n\\[\nweight_i = \\frac{N_d}{n_d}\n\\]\nTo manually calculate the weights, we can do the following:\n\n# Check that each district has different weights assigned\n# Count number of times each weigth repeats itself in the sample (in total we should get 70 rows)\nweights_per_district &lt;- eusilcA_smp |&gt; \n  select(district, weight) |&gt; \n  distinct()\n\nprint(paste0(\"We get a total of \", nrow(weights_per_district), \" unique weights.\"))\n\n[1] \"We get a total of 70 unique weights.\"\n\n# Calculate the weights manually\n## Count population per district\npop_count &lt;- eusilcA_pop |&gt;\n  count(district, name = \"N_d\")\n\n## Count sample per district\nsmp_count &lt;- eusilcA_smp |&gt;\n  count(district, name = \"n_d\")\n\n## Merge and calculate weight\nweight_check &lt;- left_join(smp_count, pop_count, by = \"district\") |&gt;\n  mutate(calculated_weight = N_d / n_d)\n\n## Add weights from sample and check they are the same\nweight_check &lt;- weight_check |&gt; \n  left_join(weights_per_district, by = \"district\")\n\nAnd now we can produce a plot to check if the manually calculated weights match the survey weights.\n\n\n\n\n\n\nThe plot shows that the manually calculated weights match the survey weights. The weight for Vienna is much larger than the weights for the other districts. This is expected, since Vienna is the largest city in Austria, and therefore has a larger population."
+  },
+  {
+    "objectID": "workshop/practical/practical.html#manual-calculation-of-the-direct-estimator",
+    "href": "workshop/practical/practical.html#manual-calculation-of-the-direct-estimator",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "3.2 Manual calculation of the direct estimator",
+    "text": "3.2 Manual calculation of the direct estimator\nNow that we understand how the weights were calcualated, let us now calculate the direct estimator manually. We will follow the Horvitz-Thompson estimator formula, which we introduced above. The steps are as follows:\n\n# Calculate total population values for sampled domains\nN &lt;- pop_count |&gt; filter(pop_count$district %in% eusilcA_smp$district)\n\n# Add N to the sample data\ndir_df &lt;- eusilcA_smp |&gt; \n  left_join(N, by = \"district\") |&gt; \n  dplyr::select(district, eqIncome, weight, N_d)\n\n# Calculate direct estimator manually for each domain\nmanual_direct &lt;- dir_df |&gt; \n  mutate(w_Y = weight * eqIncome) |&gt; \n  group_by(district, N_d) |&gt; \n  summarise(sum_wY = sum(w_Y, na.rm = TRUE), .groups = \"drop\") |&gt; \n  mutate(dir_est_manual = sum_wY / N_d)\n\n# See results\nhead(manual_direct)\n\n# A tibble: 6 × 4\n  district              N_d    sum_wY dir_est_manual\n  &lt;chr&gt;               &lt;int&gt;     &lt;dbl&gt;          &lt;dbl&gt;\n1 Amstetten             321  4879568.         15201.\n2 Baden                 398  9122834.         22922.\n3 Bludenz               162  1955274.         12070.\n4 Braunau am Inn        282  3437608.         12190.\n5 Bregenz               338 12077145.         35731.\n6 Bruck an der Leitha   265  6294628.         23753.\n\n\nThe values in the dir_est_manual column represent the direct estimator of the mean equivalised income for each district. The values are calculated by summing the product of the sample weights and the target variable, and then dividing by the population size of each district."
+  },
+  {
+    "objectID": "workshop/practical/practical.html#direct-estimator-using-the-sae-package",
+    "href": "workshop/practical/practical.html#direct-estimator-using-the-sae-package",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "3.3 Direct estimator using the sae package",
+    "text": "3.3 Direct estimator using the sae package\nNow, we will calculate the direct estimator using the sae package. The direct() function computes the Horvitz-Thompson estimator, the same one we have just manually computed. In addition to the direct estimator of the mean, the direct() function also gives us the standard deviation and coefficient of variation for each domain.\n\n# Calculate the direct estimator manually\nsae_direct &lt;- sae::direct(\n  y = eusilcA_smp$eqIncome,        # Individual values of the target variable\n  dom = eusilcA_smp$district,      # Domain names\n  sweight = eusilcA_smp$weight,    # Sampling weights\n  domsize = N,                     # Data frame with domain names and the corresponding population sizes.\n  replace = FALSE                  # Sampling conducted without replacement\n)\n\n# See results\nhead(sae_direct)\n\n                Domain SampSize   Direct       SD       CV\n3            Amstetten       33 15201.15 2723.329 17.91528\n4                Baden       40 22921.69 3564.496 15.55075\n67             Bludenz       17 12069.59 2956.478 24.49526\n39      Braunau am Inn       29 12190.10 2294.239 18.82051\n68             Bregenz       34 35731.20 6084.361 17.02815\n5  Bruck an der Leitha       27 23753.31 4475.512 18.84163\n\n\nOnce we have calculated the direct estimator manually and using the pre-defined direct() function of the sae package, we can compare the results\n\n\n\n\n\n\nThe plot shows a perfect match between the manually computed direct estimator values and the values from the direct() function of the sae package."
+  },
+  {
+    "objectID": "workshop/practical/practical.html#making-sense-of-the-results-understanding-uncertainty",
+    "href": "workshop/practical/practical.html#making-sense-of-the-results-understanding-uncertainty",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "3.4 Making sense of the results – Understanding uncertainty",
+    "text": "3.4 Making sense of the results – Understanding uncertainty\nThe direct() function has given us the direct esitmates of the equivalised income, and the standard deviation for each district. The standard deviation represents how spread the values are around the mean. To calculate the standard deviation, we can use the following formula:\n\\[\n\\widehat{Var}(\\hat{\\mu_d}) = \\frac{\\sum_{i \\in s_d} w_{di}^2 (Y_{di} - \\hat{\\mu_d})^2}{N_d^2}\n\\]\nWith this values, we can build a confidence interval for our estimates. The confidence interval represents the range of potential values of our estimator, within a certain level of confidence. This information is crucial to understand how reliable our estimates are.\nWe will now plot our estimates with their associated 95% confidence intervals:\n\n\n\n\n\n\n\n\n\nThe plot shows the value of the direct estimator and the confidence interval around that value. The confidence interval is calculated as the mean plus and minus the standard deviation multiplied by a constant value (1.96) that comes from the standard normal distribution at a 95% confidence interval. The interval represents all the possible “true values’’ of our estimator. Longer error bars indicate higher uncertainty around the estimates –there is a larger range of potential true values– while shorter error bars indicate lower uncertainty –the range of potential values is more constrained.\nThe advantage of using the sae package is that it allows us to easily implement variations of the direct estimate calculation. In some cases, the survey might have been conducted following different surveying strategies in a more flexible way. For instance, it might be that the sampling was conducted with replacement, instead of without replacement2, or it could be that we do not have access to the domain of interest population sizes, in which case we would have to proceed differently to calculate our direct estimates."
+  },
+  {
+    "objectID": "workshop/practical/practical.html#mapping-the-direct-estimator-results",
+    "href": "workshop/practical/practical.html#mapping-the-direct-estimator-results",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "3.5 Mapping the direct estimator results",
+    "text": "3.5 Mapping the direct estimator results\nOnce we have calculated the direct estimator, we can map the results to better visualise the spatial distribution of the estimates:\n\n\nWarning in layer_sf(geom = GeomSf, data = data, mapping = mapping, stat = stat,\n: Ignoring unknown aesthetics: text\n\n\n\n\n\n\nAs we saw in the theoretical part of the workshop, the direct estimator cannot produce estimates for out-of-sample domains. In our case, we have 24 districts that are not represented in the sample, and, therefore, we do not have direct estimates for them. This is a major limitation of the direct estimator, and the reason why model-based estimators are needed."
+  },
+  {
+    "objectID": "workshop/practical/practical.html#area-level-models-the-fay-herriot-model",
+    "href": "workshop/practical/practical.html#area-level-models-the-fay-herriot-model",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "4.1 Area-level models: The Fay-Herriot model",
+    "text": "4.1 Area-level models: The Fay-Herriot model\nThe area-level model (also known as the Fay-Herriot model) incorporates auxiliary data at area (domain) level to improve the direct estimator. The core idea of this model is that it combines the estimates from the direct estimator with more reliable, model-based estimates. To do so, it combines two models: the sampling model (the direct estimator) and the linking model (the model-based estimate).\n\n4.1.1 The sampling model\nThe sampling model is nothing else but the direct estimator:\n\\[\n\\hat{\\theta}_i^{\\mathrm{DIR}} = \\theta_i + \\epsilon_i\n\\]\n\n\\(\\hat{\\theta}_i^{\\mathrm{DIR}}\\): Our direct estimate of average income for district \\(i\\)..\n\\(\\theta_i\\): The true, but unknown, average income for district \\(i\\).\n\\(\\epsilon_i\\): The sampling error, which is large for districts with small samples and small for districts with large samples (remember the plot with the confidence intervals). The variance of this error, \\(V_i\\), is known from our survey design.\n\n\n\n4.1.2 The Linking Model\nThe linking model is the key part of the Fay-Herriot model. This is where we introduce the auxiliary data to improve our estimates. The linking model assumes that the true average income (\\(\\theta_i\\)) for a district is not completely random but is related to other known characteristics of that district (the auxiliary variables \\(x_i'\\)). The formula below shows how the linking model works:\n\\[\\theta_i = x_i' \\beta + u_i\\]\n\n\\(\\theta_i\\): The average income for district \\(i\\). This is the value we want to model.\n\\(x_i' \\beta\\): This is the model-based part. It’s a linear regression that predicts the average income based on known data for each district.\n\\(x_i\\): A vector of auxiliary variables for district \\(i\\).\n\\(\\beta\\): A vector of regression coefficients. These are unknown parameters that the model estimates from the data. They tell us how much each auxiliary variable affects the average income across all districts. For example, if we included education as an auxiliary variable for our model, a positive \\(\\beta\\) for this variable would mean that districts with higher education tend to have higher average incomes.\n\\(u_i\\): This is the area-specific random effect. This is a very important part of the model. It represents the part of the true average income (\\(\\theta_i\\)) that cannot be explained by the auxiliary variables (\\(x_i\\)). This value is unique to the characteristics of each domain \\(i\\). This value represents local factors that make the true value higher or lower than what the model predicts. The model assumes that these effects are normally distributed, with a mean of zero and a common \\(\\sigma_u^2\\). This means that, on average, we assume the auxiliary variables do a good job at predicting income, although we admit that there is always going to be some random variation from district to district.\n\n\n\n4.1.3 The Error Terms: \\(\\epsilon_i\\) vs. \\(u_i\\)\nAs we saw in the formula, the Fay-Herriot model includes an area-level random effect (\\(u_i\\)) and an error term (\\(\\epsilon_i\\)) . This is known as the sampling error, and represents the error in our measurement. It is the random variability that comes from our survey sampling process. For domains with small samples, our error terms will be larger than for domains with larger samples.\n\n\n4.1.4 Incorporating Spatial Autocorrelation\nThe assumption that the area-specific random effect \\(u_i\\) is independently and randomly distributed (IID) is, in many cases, a big assumption. In reality, we know that there might be areas for which our estimates are systematically more alike than in others. This is specially relevant in the case of spatial data, where we know, from Tobler’s First Law of Geography, that things that are closer together, are more alike. To account for this pattern, we can modify our random effects and make them depend on space. The formula of our new effects would be:\n\\[u = \\rho_1 Wu + \\epsilon\\]\nWhere:\n\n\\(W\\) is the adjacency matrix, which is a mathematical representation of which districts are neighbours.\n\\(\\rho_i\\) is the spatial autorregression parameter, a value between -1 and 1 that tells us how strong the spatial correlation is. If $\\rho_1$ is positive, it means that districts with a high random effect tend to be next to other districts with high random effects, and the opposite occurs if it is close to -1. If $\\rho_1$ is close to 0, it means there is no spatial correlation.\n\\(\\epsilon\\) is the new error term. It is assumed to be independent and identically distributed, and it is now part of the new \\(u\\) equation.\n\nIn summary, the linking model provides a way to estimate the true average income for each district by combining a regression model with auxiliary variables and a unique, random effect. We can acknowledge the spatial correlation between neighboring districts, which often provides a more accurate and robust estimate."
+  },
+  {
+    "objectID": "workshop/practical/practical.html#the-intercept-only-model",
+    "href": "workshop/practical/practical.html#the-intercept-only-model",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "4.2 The Intercept-Only Model",
+    "text": "4.2 The Intercept-Only Model\nThe first version of the Fay-Herriot model we will implement is the intercept-only model. The intercept-only model is a special case of the Fay-Herriot model where there are no auxiliary variables other than the constant term (the intercept). This means that the linking model is simplified to:\n\\[\n\\theta_i = \\beta_0 + u_i\n\\]\n\nwhere \\(\\beta_0\\) is the overall average mean across all areas.\n\nThe model assumes that we do not have any specific data to predict the districts’ estimates other than the already calculated direct estimates. Therefore, the estimated income is a combination of the average income across all districts and the direct estimates from the survey. The weight of each component will be determined by the variance of the direct estimates. In the extreme cases where we do not have a direct estimate for our district, the full value is the average income across all districtrs."
+  },
+  {
+    "objectID": "workshop/practical/practical.html#applying-the-area-level-model-to-our-data",
+    "href": "workshop/practical/practical.html#applying-the-area-level-model-to-our-data",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "4.3 Applying the area-level model to our data",
+    "text": "4.3 Applying the area-level model to our data\nWe will calculate the intercept-only model for our Austrian exmaple. The estimates from this model should improve those we obtained through the direct estimate. Most importantly, we should be able to obtain estimates for all the districts, even the out of sample ones. To do so, we will use the fh() function from the emdi package. This function allows us to estimate the Fay-Herriot model building from previously-calculated direct estimates.\nFirst, we will prepare the data for modelling by obtaining the direct estimates and their variance. We will then estimate the FH model and calculate the 95% confidence interval of our estimates.\n\n# Prepare the sample data (rename columns for consistency)\nsmpAgg &lt;- sae_direct %&gt;%\n  mutate(Var_Direct = SD^2,       # variance of the direct estimate\n         Mean = Direct) %&gt;%       # rename Direct to Mean\n  select(Domain, Mean, Var_Direct)\n\n# Prepare the population covariates (all 94 domains)\npopAgg &lt;- eusilcA_popAgg %&gt;%\n  select(Domain, cash, self_empl)\n\n# Combine sample and population data\ncombined_data &lt;- combine_data(\n  pop_data   = popAgg,    pop_domains = \"Domain\",\n  smp_data   = smpAgg,    smp_domains = \"Domain\"\n)\n\nNon-sampled domains exist.\n\n# Fit the intercept-only Fay–Herriot model\nfh_int &lt;- emdi::fh(\n  fixed         = Mean ~ 1,\n  vardir        = \"Var_Direct\",\n  combined_data = combined_data,\n  domains       = \"Domain\",\n  method        = \"ml\",              \n  MSE           = TRUE\n)\n\nPlease note that the model selection criteria are only computed based on the in-sample domains.\n\n# Extract estimates (includes OOS areas)\nresults_int &lt;- as.data.frame(emdi::estimators(fh_int, MSE = TRUE))\n\n# Plot results and 95% confidence intervals\n\nresults_ci &lt;- results_int %&gt;%\n  mutate(\n    lower = FH - 1.96 * sqrt(FH_MSE),\n    upper = FH + 1.96 * sqrt(FH_MSE)\n  )\n\n# Add an oos column for oos districts\nresults_ci &lt;- results_ci |&gt; \n  mutate(\n    oos = ifelse(Domain %in% eusilcA_smp$district, \"In-sample\", \"Out-of-sample\")\n  )\n\n# Plot\nggplot(results_ci, aes(x = reorder(Domain, FH), y = FH)) +\n  geom_errorbar(aes(ymin = lower, ymax = upper, colour = oos), width = 0.3) +\n  geom_point(aes(color = oos)) +\n  coord_flip() +\n  labs(\n    x = \"District\",\n    y = \"Equivalised income (Intercept-only Fay–Herriot estimate)\",\n    colour = \"Out of sample\",\n    title = \"Model-Based Estimates of Equivalised Income (95% CI)\"\n  ) +\n  theme_minimal() +\n  theme(axis.text.y = element_text(lineheight = 1.5))\n\n\n\n\n\n\n\n\nThe plot shows the estimated income for each of the 94 districts in Austria, with their respective confidence intervals. Since the model weights the relative importance of the district’s direct estimate and the average across-districts income, those districts for which a direct estimate is not available will be assigned the global average income (districts in blue). For all the other districts, the weight of the direct estimate will be higher as its variance becomes smaller.\nThe incorporation of auxiliary information will allow for higher variability and reliance in our estimates, specially for those areas with small or zero sample sizes.\n\n4.3.1 The Fay-Herriot model with auxiliary variables\nIn practice, we often have access to auxiliary variables that can help us improve our estimates further. These variables can be any attribute that relates to the target variable, and that is available through census or other aggregated data sources. In our example, we will use the auxiliary variables cash and self_empl to improve our Fay-Herriot estimates.\nTo calculate the Fay-Herriot model with auxiliary variables we implement the same function as in the intercept-only model, but this time we include our auxiliary information:\n\n# Prepare the sample data (rename columns for consistency)\nsmpAgg &lt;- sae_direct %&gt;%\n  mutate(Var_Direct = SD^2,       # variance of the direct estimate\n         Mean = Direct) %&gt;%       # rename Direct to Mean\n  select(Domain, Mean, Var_Direct)\n\n# Prepare the population covariates (all 94 domains)\npopAgg &lt;- eusilcA_popAgg %&gt;%\n  select(Domain, cash, self_empl)\n\n# Combine sample and population data\ncombined_data &lt;- combine_data(\n  pop_data   = popAgg,    pop_domains = \"Domain\",\n  smp_data   = smpAgg,    smp_domains = \"Domain\"\n)\n\nNon-sampled domains exist.\n\n# Fit the Fay–Herriot model\nfh_aux &lt;- emdi::fh(\n  fixed         = Mean ~ cash + self_empl, # Model including the auxiliary information\n  vardir        = \"Var_Direct\",\n  combined_data = combined_data,\n  domains       = \"Domain\",\n  method        = \"ml\",              \n  MSE           = TRUE\n)\n\nPlease note that the model selection criteria are only computed based on the in-sample domains.\n\n\nWarning in emdi::fh(fixed = Mean ~ cash + self_empl, vardir = \"Var_Direct\", :\nThe estimate of the variance of the random effects falls at the interval limit.\nIt is recommended to choose a larger interval for the estimation of the\nvariance of the random effects (specify interval input argument).\n\n# Extract estimates (includes OOS areas)\nresults_fh_aux &lt;- as.data.frame(emdi::estimators(fh_aux, MSE = TRUE))\n\nWarning in FUN(X[[i]], ...): NaNs produced\n\n# Add an oos column for oos districts\nresults_fh_aux &lt;- results_fh_aux |&gt; \n  mutate(\n    oos = ifelse(Domain %in% eusilcA_smp$district, \"In-sample\", \"Out-of-sample\")\n  )\n\n# Plot results and 95% confidence intervals\nresults_ci &lt;- results_fh_aux %&gt;%\n  mutate(\n    lower = FH - 1.96 * sqrt(FH_MSE),\n    upper = FH + 1.96 * sqrt(FH_MSE)\n  )\n\nWarning: There were 2 warnings in `mutate()`.\nThe first warning was:\nℹ In argument: `lower = FH - 1.96 * sqrt(FH_MSE)`.\nCaused by warning in `sqrt()`:\n! NaNs produced\nℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.\n\n# Plot\nggplot(results_ci, aes(x = reorder(Domain, FH), y = FH)) +\n  geom_errorbar(aes(ymin = lower, ymax = upper, colour = oos), width = 0.3) +\n  geom_point(aes(color = oos)) +\n  coord_flip() +\n  labs(\n    x = \"District\",\n    y = \"Equivalised income (Fay–Herriot estimate)\",\n    title = \"Model-Based Estimates of Equivalised Income (95% CI)\"\n  ) +\n  theme_minimal() +\n  theme(axis.text.y = element_text(lineheight = 1.5))\n\n\n\n\n\n\n\n\nThe plot shows the estimated income for each district, incorporating the auxiliary information on cash and self_empl. These new estimates are more precise than the intercept-only model –and even more so than the direct estimator– as we see from the confidence intervals. Even the estimates for the out-of-sample districts are now more precise, since the model uses the auxiliary variables to “borrow strength” from the other districts. This is a key advantage of the model-based approach over the direct estimator and the intercept-only model.\nTo visualise the spatial distribution of the estimates, we can plot them in a map:\n\n\n\n\n\n\n\n\n\nThis time we observe how estimates have been calculated for all areas in Austria. The Fay-Herriot model has used the auxiliary information to complement the existing direct estimates –for in-sample domains– and used a combination of the average income across domains and auxiliary data to make an informed guess about the income levels of out-of-sample domains. Overall, these estimates improve those produced by the direct estimator and the intercept-only model."
+  },
+  {
+    "objectID": "workshop/practical/practical.html#unit-level-models-the-battese-harter-fuller-model",
+    "href": "workshop/practical/practical.html#unit-level-models-the-battese-harter-fuller-model",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "4.4 Unit-level models – The Battese-Harter-Fuller model",
+    "text": "4.4 Unit-level models – The Battese-Harter-Fuller model\nThe final model-based method for small area estimation we will explore in this practical is the unit-level model. Unit-level models use individual survey values as the independent variable, as opposed to the area-level model which used the direct estimates.\nThe unit-level model can be interpreted as a bottom-up approach to producing small area estimates. Since these models employ individual-level data, the estimates can be aggregated at any desired spatial level, which provides a great advantage with respect to area-level models where estimates could only be aggregated at the same level as the available auxiliary data.\nMathematically, the unit-level model can be estimated using the Battese-Harter-Fuller model:\n\\[\n\\theta_{id} = \\mathbf{x}_{id}^\\top \\beta + u_d + \\epsilon_{id}\n\\]\n\n\\(\\theta_{id}\\) is the estimate at unit-level.\n\\(\\mathbf{x}_{id}^\\top\\) is the auxiliary information at unit-level.\n\\(\\beta\\) is the vector of coefficients that the model estimates.\n\\(u_d\\) is the area-level error.\n\\(\\epsilon_{id}\\) is the unit-level error.\n\nThe main problem of unit-level approaches is the data availability. It assumes access of unit-specific auxiliary data (\\(\\mathbf{x}_id\\)) for each element of the survey \\(i\\) and domain \\(d\\). Access to this information can be challenging, specially due to data confidenciality issues. However, a common approach for overcoming this issue is the use of synthetic population data as a mirror of the full population.\nIn this practical, we will use the ebp function from the emdi package to compute the unit-level estimator. We will use the population data provided in the EU-SILC data for Austria as our unit-level auxiliary information, and the variables cash and self_empl as auxiliary variables as we did in the area-level model.\n\n# Estimate unit-level model\nbhf_aux &lt;- ebp(\n  fixed        = eqIncome ~  cash + self_empl, # model formula\n  pop_data     = eusilcA_pop,    # population frame\n  pop_domains  = \"district\",       # domain variable in population data\n  smp_data     = eusilcA_smp,    # sample microdata\n  smp_domains  = \"district\",       # domain variable in sample data\n  L            = 100,            # number of Monte Carlo simulations\n  MSE          = TRUE,           # request MSEs\n  B            = 50,             # bootstrap reps for MSE\n  transformation = \"box.cox\",    # transformation for skewed income data\n  cpus         = 2               # parallel cores (optional)\n)\n\nThe threshold for the HCR and the PG is automatically set to 60% of the median of the dependent variable and equals 10924.32\n\n\n\nBootstrap started                                            \n\n\nLoading required package: nlme\n\n\n\nAttaching package: 'nlme'\n\n\nThe following object is masked from 'package:dplyr':\n\n    collapse\n\n\nThe following object is masked from 'package:lme4':\n\n    lmList\n\n\n\nBootstrap completed\n\n\nTo visualise the results of our model we will plot the estimates and confidence intervals as we did with our previous examples:\n\n# Format results into a data frame\nresults_bhf_aux &lt;- as.data.frame(emdi::estimators(bhf_aux, MSE=TRUE)) # domain estimates + MSE\n\n# Calculate confidence interval (95%)\nebp_ci &lt;- results_bhf_aux %&gt;%\n  mutate(\n    lower = Mean - 1.96 * sqrt(Mean_MSE),\n    upper = Mean + 1.96 * sqrt(Mean_MSE)\n  )\n\n# Add an oos column for oos districts\nebp_ci &lt;- ebp_ci |&gt; \n  mutate(\n    oos = ifelse(Domain %in% eusilcA_smp$district, \"In-sample\", \"Out-of-sample\")\n  )\n\n# Plot results\np &lt;- ggplot(ebp_ci, aes(x = reorder(Domain, Mean), y = Mean)) +\n  geom_errorbar(aes(ymin = lower, ymax = upper, colour = oos), width = 0.3) +\n  geom_point(color = \"#264653\", size = 2) +\n  coord_flip() +\n  labs(\n    x = \"District\",\n    y = \"Equivalised income (EBP estimate)\",\n    title = \"Unit-level EBP Estimates with 95% Confidence Intervals\"\n  ) +\n  theme_minimal(base_size = 12) +\n  theme(axis.text.y = element_text(lineheight = 1.5))\np\n\n\n\n\n\n\n\n\nIn this case we observe how the confidence intervals for the unit-level model are wider than those for the area-level model. This difference can be attributed to the fact that the uncertainty in the case of the unit-level model comes from two sources: the domain-level uncertainty, and the individual-level uncertainty. This makes our confidence intervals wider. Additionally, out-of-sample domains systematically present wider confidence intervals than within-sample domains. This is expected, and can be attributed to the lack of individual-level data for the out-of-sample domains.\n\n\n\n\n\n\nAgain, we observe how the model has produced estimates for all our domains. In this case, the unit-level model has taken a bottom-up approach where individual estimates have been aggregated at our desired domain level."
+  },
+  {
+    "objectID": "workshop/practical/practical.html#footnotes",
+    "href": "workshop/practical/practical.html#footnotes",
+    "title": "A practical guide on Small Area Estimation",
+    "section": "Footnotes",
+    "text": "Footnotes\n\n\nRemember that a domain refers to a small geographic area or a subpopulation (e.g., age group or income class) for which we want to calculate the small area estimation.↩︎\nSurvey sampling—selecting individuals from the total population for a survey—can be done with or without replacement. Sampling without replacement means that individuals from a domain can only be sampled once (imagine we take a ball out of a bag and we do not put it back); with replacement means we take a ball out and put it back.↩︎"
+  },
+  {
+    "objectID": "workshop/slides/slides.html#sae-in-the-wild-2",
+    "href": "workshop/slides/slides.html#sae-in-the-wild-2",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "SAE in the wild",
+    "text": "SAE in the wild\n\nSource: ONS.\n\nOfficial institutions like the Office for National Statistics also use these methods to produce very granular statistics.\nThis other map shows the estimates that the Office for National Statistics produces for income at postcode level.\nWe believe there is a lot of potential for using these methods within our community, adn would like to use this workshop to spread the word and share what we’ve learnt about them so far."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-5",
+    "href": "workshop/slides/slides.html#area-level-models-5",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models",
+    "text": "Area-level models\n\n\nThe Fay-Herriot model produces its estimates using what is known as the Empirical Best Linear Unbiased Predictor (EBLUP), which is formulated as:\n\n\\[\n\\theta_d^{FH} = \\gamma_d \\hat{\\theta_d}^{DIR} + (1 - \\gamma_d)(\\mathbf{x}_d^T \\boldsymbol{\\hat{\\beta}})\n\\]\nwhere:\n\\[\n\\gamma_d = \\frac{\\sigma_u^2}{\\sigma_u^2 + V_d}\n\\]\nwith \\(V_d\\) being the variance of the direct estimator, which we know."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-6",
+    "href": "workshop/slides/slides.html#area-level-models-6",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models",
+    "text": "Area-level models\n\n\nWhat this means is that the Fay-Herriot model is a weighted average of the direct estimator and the model estimate.\nThe FH estimator will rely more on the direct estimator when sample sizes are large.\nThe FH estimator will rely more on the model estimates when sample sizes are small."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#area-level-models-7",
+    "href": "workshop/slides/slides.html#area-level-models-7",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Area-level models",
+    "text": "Area-level models\n\n\nIn this part of the model is where we borrow strength from auxiliary information to improve the estimates of our small areas. The \\(\\mathbf{x}_d^T \\boldsymbol{\\beta}\\) part of the equation incorporates the external information at area level (\\(d\\)) and estimates its effect (\\(\\beta\\)) on the final estimate.\n\\(u_d\\) represents the part of the true value (\\(\\theta_i\\)) that cannot be explained by the auxiliary variables and that is unique to each domain. For instance, in Vienna, it might represent the “capital city” effect.\nThe model assumes that this area-level random effects are independent and normally distributed (IID). This means that, on average, the deviation from each area’s true value is similar for all the domains, and that the income levels in one area are unrelated to income levels in neighbouring areas."
+  },
+  {
+    "objectID": "workshop/slides/slides.html#unit-level-models-5",
+    "href": "workshop/slides/slides.html#unit-level-models-5",
+    "title": "Small Area Population Estimation A practical guide",
+    "section": "Unit-level models",
+    "text": "Unit-level models\n\n\nThe unit-level model can be interpreted as a bottom-up approach to small area estimation.\nThis gives us more flexibility, since the use of individual-level information allows us to aggregate the data at other domain levels without being constrained by the resolution of the area-level of the auxiliary covariates (as opposed to area-level models).\nThe data requirements, however, are much higher for unit-level models: we need access to individual data, which can come from census microdata or synthetic populations. These might not always be available."
+  }
+]

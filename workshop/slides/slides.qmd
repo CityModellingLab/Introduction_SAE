@@ -41,7 +41,7 @@ nocite: |
 
 -   There is a wide range of existing surveys (NTS, English Housing Survey), but they are usually designed to be used at regional or national scale. It is not easy to use this data to produce neighbourhood or small area estimates (OA, MSOA, LSOA).
 
--   As part of the project, we have had to learn about these methods, so we take this workshop as an opportunity to share what we have learnt with the urban analytics community.
+-   As part of the project, we have had to learn about these methods, so we take this workshop as an opportunity to share what we have learnt with others!
 :::
 
 ------------------------------------------------------------------------
@@ -84,6 +84,10 @@ nocite: |
 
 
 # Background
+
+## SAE in the wild
+
+![<span style="font-size:80%;">Source: World Bank.</span>](Figures/WB_poverty_map.png){fig-align="center" width="4000"}
 
 ## SAE in the wild
 
@@ -556,7 +560,7 @@ where $\hat{\bar{Y}_d}$ is our estimate for area $d$; $N_d$ is the total populat
 
 ## Direct estimation methods
 
-::: incremental
+::: {.incremental style="font-size: 80%;"}
 
 - Additionally, for areas with small sample sizes, our estimates might be unreliable.
 - What does that mean?
@@ -589,7 +593,7 @@ where $\hat{\bar{Y}_d}$ is our estimate for area $d$; $N_d$ is the total populat
 
 ## Model-based estimation methods
 
-::: {.incremental style="font-size: 100%;"}
+::: {.incremental style="font-size: 80%;"}
 -   Direct methods are only reliable under large enough samples. However, this is not usually the case when we work with real survey data and small areas.
 
 -   Furthermore, we usually have access to additional sources of information, not just survey data --e.g. census data, administrative data-- which can tell us more about the target variable.
@@ -631,20 +635,93 @@ where $\hat{\bar{Y}_d}$ is our estimate for area $d$; $N_d$ is the total populat
 
 ## Area-level models
 
-::: {.incremental style="font-size: 80%;"}
+::: {.incremental style="font-size: 90%;"}
 -   Area-level models only use covariates at domain level.
 
--   Formally, they are estimated in two steps using what is known as the **Fay-Herriot model**:
+- Formally, we estimate them using the **Fay-Herriot** model.
+
+- The Fay-Herriot model uses a two-step approach where we first calculate the direct estimator, and then model the outcomes using the auxiliary information.
 :::
 
+---
+
+## Area-level models
+
 ::: {.fragment style="font-size: 80%;"}
--   First, the we calculate the direct estimator (the same one we learnt about earlier):
+-   First, the **sampling model** models the direct estimator. 
 
     $$
     \hat{\theta}_d^{DIR} = \theta_d + \epsilon_d
     $$
 
 where $\hat{\theta}_d^{DIR}$ is the direct estimate for area $d$,formed by the true value $\theta_d$ plus the sampling error $\epsilon_d$, which reflects the sampling error.
+
+
+:::{.incremental style="font-size: 100%;"}
+- The sampling model establishes the relationship between the what we observe in the survey and the true values of the estimator.
+
+- What it says, intuitively, is that each direct estimate is the true value plus some noise produced by using a sample, instead of the full population.
+
+- The level of noise depends on the sample size: smaller samples lead to more noise.
+
+:::
+:::
+
+------------------------------------------------------------------------
+
+## Area-level models
+
+::: { .incremental .fragment style="font-size: 80%;"}
+
+- Next, the **linking model** *links* the true mean with the auxiliary information. This is the bit that lets us *borrow strength* from additional information.
+
+    $$
+    \theta_d = \mathbf{x}_d^T \boldsymbol{\beta} + u_d, \quad u_d \sim_{\text{ind}} N(0, \sigma_u^2), \quad d = 1, \ldots, M
+    $$
+
+  where $\theta_i$ is the true value of the parameter; $\mathbf{x}_d^T$ are the covariates for area $d$, with their respective $\beta$ coefficients (the fixed effects), and $u_d$ is the area-level random effect, capturing the unexplained differences between areas.
+
+- What this part of the model says, intuitively, is that the true area value is not just random noise, it can be predicted through known area-level data ($\mathbf{x}_d^T$).
+
+- But we always introduce some errors because of everything we cannot measure ($u_d$).
+
+- Together ($\mathbf{x}_d^T \boldsymbol{\beta} + u_d$) we get a better-informed *guess* of the true value of our estimator.
+
+:::
+
+---
+
+## Area-level models
+
+
+- Together, we obtain the following equation:
+
+    $$
+     \hat{\theta}_d^{DIR} = \theta_d + \mathbf{x}_d^T \boldsymbol{\beta} + u_d + \epsilon_d, \quad u_d \sim_{\text{ind}} N(0, \sigma_u^2), \quad d = 1, \ldots, M
+    $$
+
+
+
+
+---
+
+## Area-level models
+
+::: {.fragment style="font-size: 75%;"}
+
+- The Fay-Herriot model produces its estimates using what is known as the Empirical Best Linear Unbiased Predictor (EBLUP), which is formulated as:
+
+$$
+\theta_d^{FH} = \gamma_d \hat{\theta_d}^{DIR} + (1 - \gamma_d)(\mathbf{x}_d^T \boldsymbol{\hat{\beta}})
+$$
+
+where:
+
+$$
+\gamma_d = \frac{\sigma_u^2}{\sigma_u^2 + V_d}
+$$
+
+with $V_d$ being the variance of the direct estimator, which we know.
 :::
 
 ---
@@ -653,37 +730,11 @@ where $\hat{\theta}_d^{DIR}$ is the direct estimate for area $d$,formed by the t
 
 ::: incremental
 
-- The term $\hat{\theta}_d$ indicates that we are making an *estimate* of our variable of interest based on a sample for each area *d*.
-- The term $\epsilon_d$ represents the sampling error, or the difference between your estimate and the *true value* of your variable. The error term indicates that our estimate is not perfect, and deviates from the real value because of random chance derived, for instance, from our sampling method.
+- What this means is that the Fay-Herriot model is a weighted average of the direct estimator and the model estimate.
 
-:::
+- The FH estimator will rely more on the direct estimator when sample sizes are large.
 
-------------------------------------------------------------------------
-
-## Area-level models
-
-::: {.fragment style="font-size: 80%;"}
--   Next, the true values of the variable $\theta_d$ are modelled using area-level covariates.
-- This is the so-called *sampling model* in the Fay-Herriot model:
-
-    $$
-    \theta_d = \mathbf{x}_d^T \boldsymbol{\beta} + u_d, \quad u_d \sim_{\text{ind}} N(0, \sigma_u^2), \quad d = 1, \ldots, M
-    $$
-
-where $\mathbf{x}_d^T$ are the covariates for area $d$, with their respective $\beta$ coefficients (the fixed effects), and $u_d$ is the area-level random effect, capturing the unexplained differences between areas.
-:::
-
----
-
-## Area-level models
-
-::: {.incremental style="font-size: 75%;"}
-
-- In this part of the model is where we *borrow strength* from auxiliary information to improve the estimates of our small areas. The $\mathbf{x}_d^T \boldsymbol{\beta}$ part of the equation incorporates the external information at area level ($d$) and estimates its effect ($\beta$) on the final estimate.
-
-- $u_d$ represents the part of the true value ($\theta_i$) that cannot be explained by the auxiliary variables and that is unique to each domain. For instance, in Vienna, it might represent the "capital city" effect.
-
-- The model assumes that this area-level random effects are independent and normally distributed (IID). This means that, on average, the deviation from each area's true value is similar for all the domains, and that the income levels in one area are unrelated to income levels in neighbouring areas.
+- The FH estimator will rely more on the model estimates when sample sizes are small.
 
 :::
 
@@ -691,7 +742,11 @@ where $\mathbf{x}_d^T$ are the covariates for area $d$, with their respective $\
 
 ## Spatial area-level models
 
-::: {.incremental style="font-size: 75%;"}
+::: {.incremental style="font-size: 60%;"}
+
+- The basic Fay-Herriot model assumes that the area-level effects ($u_d$) are independent and identically distributed.
+
+- What this means is that what happens in one area is unrelated to what is happening in other areas. In our example, this would mean that the income in one places is not related to income anywhere else.
 
 - In reality, we know that this is usually not true: neighbouring areas tend to look alike (Tobler's First Law of Geography).
 
@@ -760,12 +815,12 @@ where $\beta_0$ is the global average, and $u_d$ represents the area-level rando
 ## Area-level vs Direct estimator
 
 :::::: columns
-:::: {.column width="49%"}
+:::: {.column width="45%"}
 ![](Figures/direct_estimates_uncertainty.png)
 :::
 
 
-::: {.column width="49%"}
+::: {.column width="54%"}
 ![](Figures/area_level_estimates_uncertainty.png)
 :::
 ::::::
@@ -774,10 +829,15 @@ where $\beta_0$ is the global average, and $u_d$ represents the area-level rando
 
 ## Area-level models: Advantages and limitations
 
-::: {.incremental style="font-size: 100%;"}
+::: {.incremental style="font-size: 80%;"}
+
+### Advantages
 -   The main advantage of using an area-level model is that we increase the precision of our estimates by adding auxiliary information at area level.
 -   Additionally, this allows us to obtain predictions for out-of-sample domains, even when no auxiliary information is available.
--   However, these models require access to area-level data, and are not as straightforward to interpret as direct methods.
+
+### Limitations
+
+-   These models require access to area-level data, and are not as straightforward to interpret as direct methods.
 :::
 
 ------------------------------------------------------------------------
@@ -791,9 +851,7 @@ where $\beta_0$ is the global average, and $u_d$ represents the area-level rando
 ::: {.incremental style="font-size: 65%;"}
 -   Unit-level models are the most complex type of SAE method we will talk about today.
 
--   Unit-level models incorporate auxiliary data at individual (or household, or whichever unit of analysis we are using) level.
-
--   These models **assume that unit-specific auxiliary data** is available for each population element $i$ in each area $d$.
+-   Unit-level models uses **individual responses** from survey combined with covariates available for the **whole population**, available through synthetic populations or census microdata.
 
 -   In general, they allow for producing more precise estimates than direct estimators and area-level models.
 
@@ -826,15 +884,26 @@ $$
 
 ## Unit-level models
 
+::: incremental
+
+- The model is estimated over the survey data, with observed values of $y_{di}$ and $x_{di}$.
+- It is then applied to the full population, using the microdata or synthetic data available, and used to predict the values of $y_{di}$ for every element of the population.
+- The individual-level values are then aggregated at the desired spatial level.
+:::
+
+---
+
+## Unit-level models
+
 ::: {.incremental style="font-size: 75%;"}
 
 - The area-level random effect accounts for those attributes of the domain that cannot be explained by the area-level auxiliary variables we include in the model, and contribute to variations in the target variable.
 
-- E.g. Vienna being the capital, and this leading to higher average income levels.
+  - E.g. Vienna being the capital, and this leading to higher average income levels.
 
 - Similarly, the unit-level random effects account for individual-level characteristics that cannot be explained by the unit-level covariates included in the model.
 
-- E.g. A person being the head a bank and earning a very high salary (assuming we do not include occupation as a covariate).
+  - E.g. A person being the CEO at a bank and earning a very high salary (assuming we do not include occupation as a covariate).
 :::
 
 ## Unit-level models
@@ -860,7 +929,7 @@ $$
 
 ### Limitations
 
--   They require access to both unit-level covariates and population-level auxiliary data, which may not always be available.
+-   They require access to population-level auxiliary data at individual level, which may not always be available.
 
 -   Estimation is more complex and computationally demanding than area-level models, especially when working with large populations.
 :::
@@ -889,7 +958,7 @@ $$
 
 ## QR code for practical
 
-![https://cpeiretgarcia.github.io/SAE_workshop_CUPUM/](qr-code.png){fig-align="center"}
+![](Figures/qr-code.png){fig-align="center"}
 
 ------------------------------------------------------------------------
 
